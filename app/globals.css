@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --cream: #FCF9F8;
+    --burgundy: #97453E;
+    --salmon-from: #F28D83;
+    --salmon-to: #D47A73;
+    --charcoal: #1B1C1B;
+    --taupe: #877270;
+    --taupe-dark: #554240;
+    --border-light: #E5E2E1;
+  }
+  
+  body {
+    @apply bg-[#FCF9F8] text-[#1B1C1B] font-sans;
+  }
+  
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer utilities {
+  .gradient-salmon {
+    background: linear-gradient(135deg, #F28D83 0%, #D47A73 100%);
+  }
+}

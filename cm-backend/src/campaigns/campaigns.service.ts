@@ -63,6 +63,26 @@ export class CampaignsService implements OnModuleInit {
       throw new InternalServerErrorException(`Could not fetch from Supabase: ${error.message}`);
     }
 
-    return data;
+    // Transform snake_case to camelCase for frontend
+    return data.map(campaign => ({
+      id: campaign.id,
+      title: campaign.title,
+      beneficiary: campaign.beneficiary || 'Not specified',
+      raised: campaign.collected_amount || 0,
+      goal: campaign.target_amount || 0,
+      donors: campaign.donor_count || 0,
+      endDate: campaign.end_date || 'TBD',
+      status: this.mapStatus(campaign.status),
+    }));
+  }
+
+  /**
+   * Maps database status to frontend status format
+   */
+  private mapStatus(dbStatus: string): 'Active' | 'Pending' | 'Completed' {
+    if (dbStatus === 'active') return 'Active';
+    if (dbStatus === 'draft') return 'Pending';
+    if (dbStatus === 'completed') return 'Completed';
+    return 'Pending';
   }
 }

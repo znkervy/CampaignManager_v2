@@ -1,173 +1,184 @@
-import React, { useState, useRef } from 'react';
+'use client';
+
+import { useState } from 'react';
+import { X, Image as ImageIcon } from 'lucide-react';
 
 interface CreateCampaignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
 export default function CreateCampaignModal({ isOpen, onClose, onSuccess }: CreateCampaignModalProps) {
-  const [campaignName, setCampaignName] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
-  const [beneficiaryDetails, setBeneficiaryDetails] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!campaignName.trim() || !beneficiaryDetails.trim() || !targetAmount) {
-      alert("Please fill in all fields");
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      // Map frontend fields to match your 'hc_campaigns' schema
-      const payload = {
-        title: campaignName,
-        target_amount: parseFloat(targetAmount),
-        description: beneficiaryDetails,
-        collected_amount: 0,
-        status: 'pending', // Default status for new campaigns
-        cover_image_key: selectedFile ? selectedFile.name : 'default_cover.jpg', // Placeholder logic for now
-      };
-
       const response = await fetch('http://localhost:3001/api/campaigns', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          target_amount: parseFloat(targetAmount) || 0,
+          status: 'draft',
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to create campaign');
-
-      // Success
-      if (onSuccess) onSuccess();
       
-      // Reset state
-      setCampaignName('');
+      // Reset form
+      setTitle('');
+      setDescription('');
       setTargetAmount('');
-      setBeneficiaryDetails('');
-      setSelectedFile(null);
-      onClose();
-      alert('Campaign created successfully!');
-
+      
+      onSuccess();
     } catch (error) {
-      console.error('Error:', error);
-      alert('Error connecting to backend. Ensure cm-backend is running.');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error creating campaign:', error);
+      alert('Failed to create campaign');
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    // Handle file upload here
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#E7D6D3] rounded-[2.5rem] p-10 w-full max-w-xl shadow-2xl relative border border-white/20">
-        <button 
-          onClick={onClose} 
-          className="absolute top-6 right-8 text-gray-500 hover:text-black text-2xl"
-          disabled={isSubmitting}
-        >
-          ✕
-        </button>
-        
-        <h2 className="text-[#62312A] text-3xl font-bold text-center mb-8">Create New Campaign</h2>
-        
-        <div className="space-y-5">
-          {/* Upload Section */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[75vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="bg-white px-8 py-6 flex items-center justify-between border-b border-gray-100">
+          <h2 className="text-3xl font-bold text-[#1B1C1B]">Create Initiative</h2>
+          <button 
+            onClick={onClose}
+            className="hover:bg-gray-100 p-2 rounded-lg transition text-gray-500"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
+          {/* Campaign Cover Photo */}
           <div>
-            <label className="block text-[#62312A] font-bold mb-2">Upload Campaign Cover Photo</label>
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="group cursor-pointer border-2 border-dashed border-[#A7413E]/30 bg-white/50 rounded-2xl p-8 flex flex-col items-center justify-center transition-all hover:bg-white hover:border-[#A7413E]"
+            <label className="block text-base font-bold text-[#1B1C1B] mb-3">
+              Campaign Cover Photo
+            </label>
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-2xl p-16 text-center transition ${
+                isDragging 
+                  ? 'border-[#F28D83] bg-[#F28D83]/5' 
+                  : 'border-gray-300 hover:border-[#F28D83] bg-gray-50'
+              }`}
             >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                accept="image/*"
-              />
-              <div className="text-[#A7413E] mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#F28D83]/10 rounded-full flex items-center justify-center">
+                <ImageIcon size={32} className="text-[#F28D83]" />
               </div>
-              <p className="text-[#62312A] font-bold text-lg">
-                {selectedFile ? selectedFile.name : 'Drag & Drop or Click to Upload'}
+              <p className="text-[#1B1C1B] font-semibold mb-1">
+                Drag & Drop image here
               </p>
-              <p className="text-gray-500 text-sm">Support for image files only</p>
+              <p className="text-sm text-gray-400">
+                or click to browse from your computer
+              </p>
             </div>
           </div>
 
-          {/* Campaign Name */}
+          {/* Initiative Name */}
           <div>
-            <label className="block text-[#62312A] font-bold mb-1">Campaign Name</label>
-            <input 
-              type="text" 
-              placeholder="Enter campaign name" 
-              value={campaignName} 
-              onChange={(e) => setCampaignName(e.target.value)} 
-              disabled={isSubmitting}
-              className="w-full bg-white text-[#62312A] p-4 rounded-xl border-none focus:ring-2 focus:ring-[#A7413E] shadow-sm" 
+            <label className="block text-base font-bold text-[#1B1C1B] mb-3">
+              Initiative Name
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F28D83] focus:border-transparent text-[#1B1C1B] placeholder:text-gray-400"
+              placeholder="e.g. Community Clean Water Project"
             />
           </div>
 
-          {/* Target Amount */}
+          {/* Target Funding Goal */}
           <div>
-            <label className="block text-[#62312A] font-bold mb-1">Target Amount</label>
-            <input 
-              type="number" 
-              placeholder="Enter target amount" 
-              value={targetAmount} 
-              onChange={(e) => setTargetAmount(e.target.value)} 
-              disabled={isSubmitting}
-              className="w-full bg-white text-[#62312A] p-4 rounded-xl border-none focus:ring-2 focus:ring-[#A7413E] shadow-sm" 
+            <label className="block text-base font-bold text-[#1B1C1B] mb-1">
+              Target Funding Goal
+            </label>
+            <div className="text-xs text-gray-400 mb-3 uppercase tracking-wide">PHP</div>
+            <div className="relative">
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-lg">₱</span>
+              <input
+                type="number"
+                value={targetAmount}
+                onChange={(e) => setTargetAmount(e.target.value)}
+                required
+                min="0"
+                step="0.01"
+                className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F28D83] focus:border-transparent text-[#1B1C1B] text-lg placeholder:text-gray-400"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          {/* Beneficiary & Impact Details */}
+          <div>
+            <label className="block text-base font-bold text-[#1B1C1B] mb-3">
+              Beneficiary & Impact Details
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              rows={5}
+              className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F28D83] focus:border-transparent text-[#1B1C1B] resize-none placeholder:text-gray-400"
+              placeholder="Describe who this helps and what the funds will be used for..."
             />
           </div>
 
-          {/* Beneficiary Details */}
-          <div>
-            <label className="block text-[#62312A] font-bold mb-1">Beneficiary Details</label>
-            <textarea 
-              placeholder="Enter beneficiary details" 
-              rows={3} 
-              value={beneficiaryDetails} 
-              onChange={(e) => setBeneficiaryDetails(e.target.value)} 
-              disabled={isSubmitting}
-              className="w-full bg-white text-[#62312A] p-4 rounded-xl border-none focus:ring-2 focus:ring-[#A7413E] shadow-sm resize-none" 
-            />
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-8 py-4 bg-white border-2 border-gray-200 text-[#1B1C1B] rounded-xl font-semibold hover:bg-gray-50 transition text-base"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-8 py-4 gradient-salmon text-white rounded-xl font-semibold hover:opacity-90 transition shadow-md text-base"
+            >
+              Publish Initiative
+            </button>
           </div>
-        </div>
-
-        {/* Footer Buttons */}
-        <div className="flex gap-4 mt-8">
-          <button 
-            onClick={onClose} 
-            disabled={isSubmitting}
-            className="flex-1 bg-[#DDE2E7] text-[#62312A] font-bold py-4 rounded-2xl hover:bg-gray-300 transition-colors"
-          >
-            Cancel
-          </button>
-          <button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="flex-1 bg-[#A7413E] text-white font-bold py-4 rounded-2xl hover:bg-[#8e3532] shadow-lg shadow-[#A7413E]/30 transition-colors"
-          >
-            {isSubmitting ? 'Creating...' : 'Create Campaign'}
-          </button>
-        </div>
+        </form>
       </div>
     </div>
   );
