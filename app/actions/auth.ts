@@ -25,12 +25,20 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
     return { error: 'Passwords do not match.' };
   }
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
   if (!secFile || secFile.size === 0) {
     return { error: 'Please upload your SEC Registration.' };
+  }
+  if (secFile.size > MAX_FILE_SIZE) {
+    return { error: 'SEC Registration must be smaller than 5 MB.' };
   }
 
   if (!orgCertFile || orgCertFile.size === 0) {
     return { error: 'Please upload your Organizational Certificate.' };
+  }
+  if (orgCertFile.size > MAX_FILE_SIZE) {
+    return { error: 'Organizational Certificate must be smaller than 5 MB.' };
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -59,7 +67,8 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
     .upload(orgCertKey, orgCertFile);
 
   if (orgCertUploadError) {
-    return { error: `Failed to upload Organizational Certificate: ${orgCertUploadError.message}` };
+    await adminClient.storage.from('camp-man-files').remove([secKey]);
+    return { error: 'Failed to upload Organizational Certificate. Please try again.' };
   }
 
   // Create auth user
