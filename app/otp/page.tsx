@@ -1,0 +1,84 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { ChangeEvent, KeyboardEvent, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+import AuthShell from '../../components/AuthShell';
+
+const OTP_LENGTH = 6;
+
+export default function OtpPage() {
+  const router = useRouter();
+  const [code, setCode] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+  const updateDigit = (index: number, value: string) => {
+    const nextValue = value.replace(/\D/g, '').slice(-1);
+    const nextCode = [...code];
+    nextCode[index] = nextValue;
+    setCode(nextCode);
+
+    if (nextValue && index < OTP_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleChange = (index: number, event: ChangeEvent<HTMLInputElement>) => {
+    updateDigit(index, event.target.value);
+  };
+
+  const handleKeyDown = (index: number, event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerify = () => {
+    router.push('/dashboard');
+  };
+
+  return (
+    <AuthShell
+      title="Verify Your Identity"
+      description="We&apos;ve sent a 6-digit code to your email. Please enter it below to continue."
+      footerRightLabel="Identity Verified"
+    >
+      <div className="flex justify-center gap-2.5">
+        {code.map((digit, index) => (
+          <input
+            key={index}
+            ref={(element) => {
+              inputRefs.current[index] = element;
+            }}
+            value={digit}
+            onChange={(event) => handleChange(index, event)}
+            onKeyDown={(event) => handleKeyDown(index, event)}
+            inputMode="numeric"
+            maxLength={1}
+            className="h-9 w-9 rounded-full bg-[#f5f2f1] text-center text-[14px] font-bold text-[#6d4a44] outline-none transition focus:ring-2 focus:ring-[#d7a29a]"
+            aria-label={`OTP digit ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={handleVerify}
+        className="mt-6 flex h-[42px] w-full items-center justify-center gap-1.5 rounded-full bg-[#a6493f] text-[11px] font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(166,73,63,0.28)] transition hover:bg-[#963f37]"
+      >
+        Verify
+        <ArrowRight size={13} />
+      </button>
+
+      <div className="mt-7 text-center">
+        <p className="text-[10px] font-medium text-[#8f817d]">Didn&apos;t receive the code?</p>
+        <div className="mt-4 flex items-center justify-center gap-4 text-[10px]">
+          <button type="button" className="font-semibold text-[#f0a4a0]">
+            Resend Code
+          </button>
+          <span className="rounded-full bg-[#f5f2f1] px-3 py-1 font-medium text-[#8f817d]">01:59</span>
+        </div>
+      </div>
+    </AuthShell>
+  );
+}
