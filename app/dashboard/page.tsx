@@ -8,6 +8,7 @@ export default async function DashboardPage() {
 
   if (!user) {
     redirect('/');
+    return null; // unreachable — satisfies TypeScript narrowing for future user prop
   }
 
   return <DashboardUI />;
