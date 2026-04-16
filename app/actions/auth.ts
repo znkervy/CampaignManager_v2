@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { redirect } from 'next/navigation';
 
 export type AuthActionResult = { error: string } | null;
 
@@ -103,4 +104,51 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
   }
 
   return null; // success — caller shows confirmation message
+}
+
+export async function loginAction(formData: FormData): Promise<AuthActionResult> {
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  const supabase = await createClient();
+
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError || !data.user) {
+    return { error: 'Invalid email or password.' };
+  }
+
+  const user = data.user;
+
+  if (!user.email_confirmed_at) {
+    await supabase.auth.signOut();
+    return { error: 'Please confirm your email before signing in.' };
+  }
+
+  const adminClient = createAdminClient();
+  const { data: profile, error: profileError } = await adminClient
+    .from('campaign_manager_profiles')
+    .select('status')
+    .eq('auth_user_id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    await supabase.auth.signOut();
+    return { error: 'Account not found. Please contact support.' };
+  }
+
+  if (profile.status === 'pending') {
+    await supabase.auth.signOut();
+    return { error: 'Your account is pending admin approval.' };
+  }
+
+  if (profile.status === 'rejected') {
+    await supabase.auth.signOut();
+    return { error: 'Your account has been rejected. Please contact support.' };
+  }
+
+  redirect('/dashboard');
 }
