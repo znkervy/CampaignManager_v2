@@ -42,7 +42,7 @@ export default function AppShell({
 
   return (
     <main className="h-screen overflow-hidden bg-[#fcfaf8] text-[#463431]">
-      <div className="mx-auto flex h-screen max-w-[1440px]">
+      <div className="flex h-screen w-full bg-[#fffdfa]">
         <aside className="hidden h-screen w-[250px] shrink-0 flex-col border-r border-[#f0e7e3] bg-[#fffdfa] xl:flex">
           <div className="flex h-[72px] items-center gap-3 border-b border-[#f0e7e3] px-5">
             <button type="button" className="text-[#7d6a64]">

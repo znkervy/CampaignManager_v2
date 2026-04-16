@@ -42,7 +42,7 @@ const bankingItems = [
 export default function SettingsPage() {
   return (
     <AppShell searchPlaceholder="Search campaign settings...">
-      <div className="mx-auto max-w-[1120px] space-y-6 pb-32">
+      <div className="w-full space-y-6 pb-32">
         <div>
           <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">Account Settings</h1>
           <p className="mt-2 text-[15px] text-[#84716b]">

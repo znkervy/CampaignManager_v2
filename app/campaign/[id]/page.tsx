@@ -69,7 +69,7 @@ export default function CampaignDetails() {
     <div className="min-h-screen bg-[#FCF9F8]">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 bg-[#97453E] text-white px-8 py-4 shadow-md z-50">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+        <div className="w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/images/logo_h.png" alt="HOPECARD" className="h-12 w-auto" />
             <span className="font-extrabold text-xl tracking-tight">HOPECARD</span>
@@ -95,7 +95,7 @@ export default function CampaignDetails() {
 
       {/* Main Content */}
       <main className="pt-28 px-8 pb-12">
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full">
           {/* Back Button */}
           <button
             onClick={() => router.push('/')}

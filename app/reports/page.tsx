@@ -77,7 +77,7 @@ const transactions = [
 export default function ReportsPage() {
   return (
     <AppShell searchPlaceholder="Search reports...">
-      <div className="mx-auto max-w-[1120px] space-y-6 pb-28">
+      <div className="w-full space-y-6 pb-28">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">Financial Reports &amp; Insights</h1>

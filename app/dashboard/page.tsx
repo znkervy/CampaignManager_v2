@@ -126,7 +126,7 @@ const liveActivities = [
 export default function DashboardPage() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1120px]">
+      <div className="w-full">
         <div>
           <h1 className="text-[24px] font-extrabold tracking-[-0.03em] text-[#2e2523] sm:text-[28px]">Welcome back, Sarah</h1>
           <p className="mt-1 text-[14px] text-[#84716b]">

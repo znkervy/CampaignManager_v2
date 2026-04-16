@@ -87,7 +87,7 @@ const donors = [
 export default function DonorsPage() {
   return (
     <AppShell searchPlaceholder="Search donors...">
-      <div className="mx-auto max-w-[1120px] space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">Donors Database</h1>

@@ -90,7 +90,7 @@ export default function CreateCampaignPage() {
 
   return (
     <AppShell searchPlaceholder="Search campaigns...">
-      <div className="mx-auto max-w-[1100px] space-y-6 pb-10">
+      <div className="w-full space-y-6 pb-10">
         <div>
           <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">{stepTitle}</h1>
           <p className="mt-2 max-w-[860px] text-[15px] text-[#84716b]">{stepDescription}</p>
