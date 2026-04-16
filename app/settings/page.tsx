@@ -148,7 +148,7 @@ export default function SettingsPage() {
                   ['New Donations', 'Instant alerts for every gift', true],
                   ['Admin Messages', 'Critical system updates', false],
                 ].map(([title, copy, enabled]) => (
-                  <div key={title} className="flex items-start justify-between gap-3">
+                  <div key={title as string} className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[14px] font-bold text-[#433330]">{title}</p>
                       <p className="mt-1 text-[12px] text-[#8d7d78]">{copy}</p>

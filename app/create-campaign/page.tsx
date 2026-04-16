@@ -428,7 +428,7 @@ export default function CreateCampaignPage() {
                     ['Final Approval', 'Reviewing compliance', '', false],
                     ['Marketplace Listing', 'Launch to donors', '', false],
                   ].map(([title, copy, eta, active]) => (
-                    <div key={title} className="relative z-10 flex flex-col items-start">
+                    <div key={title as string} className="relative z-10 flex flex-col items-start">
                       <div
                         className={`flex h-9 w-9 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(87,55,48,0.06)] ${
                           active ? 'bg-[#f58f86] text-white' : 'bg-white text-[#8f817d]'
