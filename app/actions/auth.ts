@@ -1,6 +1,5 @@
 'use server';
 
-import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 
@@ -17,6 +16,10 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
   const secFile = formData.get('secRegistration') as File;
   const orgCertFile = formData.get('orgCertificate') as File;
 
+  if (!firstName || !lastName || !organizationName || !email || !number || !password || !confirmPassword) {
+    return { error: 'All fields are required.' };
+  }
+
   if (password !== confirmPassword) {
     return { error: 'Passwords do not match.' };
   }
@@ -29,10 +32,16 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
     return { error: 'Please upload your Organizational Certificate.' };
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return { error: 'Server misconfiguration. Please contact support.' };
+  }
+
   const adminClient = createAdminClient();
 
   // Upload SEC Registration
-  const secKey = `sec-registrations/${Date.now()}-${secFile.name}`;
+  const secExt = secFile.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') ?? 'bin';
+  const secKey = `sec-registrations/${Date.now()}-${crypto.randomUUID()}.${secExt}`;
   const { error: secUploadError } = await adminClient.storage
     .from('camp-man-files')
     .upload(secKey, secFile);
@@ -42,7 +51,8 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
   }
 
   // Upload Org Certificate
-  const orgCertKey = `org-certificates/${Date.now()}-${orgCertFile.name}`;
+  const orgCertExt = orgCertFile.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') ?? 'bin';
+  const orgCertKey = `org-certificates/${Date.now()}-${crypto.randomUUID()}.${orgCertExt}`;
   const { error: orgCertUploadError } = await adminClient.storage
     .from('camp-man-files')
     .upload(orgCertKey, orgCertFile);
@@ -57,11 +67,12 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: `${appUrl}/auth/callback`,
     },
   });
 
   if (signUpError) {
+    await adminClient.storage.from('camp-man-files').remove([secKey, orgCertKey]);
     return { error: signUpError.message };
   }
 
@@ -86,7 +97,9 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
     });
 
   if (profileError) {
-    return { error: `Failed to save profile: ${profileError.message}` };
+    await adminClient.storage.from('camp-man-files').remove([secKey, orgCertKey]);
+    await adminClient.auth.admin.deleteUser(user.id);
+    return { error: 'Failed to save profile. Please try again.' };
   }
 
   return null; // success — caller shows confirmation message
