@@ -11,13 +11,13 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
   const lastName = formData.get('lastName') as string;
   const organizationName = formData.get('organization') as string;
   const email = formData.get('email') as string;
-  const number = formData.get('contactNumber') as string;
+  const phone = formData.get('contactNumber') as string;
   const password = formData.get('password') as string;
   const confirmPassword = formData.get('confirmPassword') as string;
   const secFile = formData.get('secRegistration') as File;
   const orgCertFile = formData.get('orgCertificate') as File;
 
-  if (!firstName || !lastName || !organizationName || !email || !number || !password || !confirmPassword) {
+  if (!firstName || !lastName || !organizationName || !email || !phone || !password || !confirmPassword) {
     return { error: 'All fields are required.' };
   }
 
@@ -100,16 +100,17 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
       last_name: lastName,
       organization_name: organizationName,
       email,
-      number,
+      phone,
       sec_registration: secKey,
       organization_certificate: orgCertKey,
       status: 'pending',
     });
 
   if (profileError) {
+    console.error('[signUpAction] profile insertion failed:', profileError);
     await adminClient.storage.from('camp-man-files').remove([secKey, orgCertKey]);
     await adminClient.auth.admin.deleteUser(user.id);
-    return { error: 'Failed to save profile. Please try again.' };
+    return { error: `Failed to save profile: ${profileError.message}` };
   }
 
   return null; // success — caller shows confirmation message
