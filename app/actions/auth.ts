@@ -107,8 +107,12 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
 }
 
 export async function loginAction(formData: FormData): Promise<AuthActionResult> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = (formData.get('email') as string | null)?.trim() ?? '';
+  const password = (formData.get('password') as string | null) ?? '';
+
+  if (!email || !password) {
+    return { error: 'Email and password are required.' };
+  }
 
   const supabase = await createClient();
 
@@ -117,12 +121,18 @@ export async function loginAction(formData: FormData): Promise<AuthActionResult>
     password,
   });
 
-  if (signInError || !data.user) {
+  if (signInError) {
+    return { error: 'Invalid email or password.' };
+  }
+  if (!data.user) {
+    await supabase.auth.signOut();
     return { error: 'Invalid email or password.' };
   }
 
   const user = data.user;
 
+  // Belt-and-suspenders: Supabase also blocks unconfirmed sign-ins at the
+  // project level, but we re-check here in case that setting is disabled.
   if (!user.email_confirmed_at) {
     await supabase.auth.signOut();
     return { error: 'Please confirm your email before signing in.' };
@@ -136,18 +146,20 @@ export async function loginAction(formData: FormData): Promise<AuthActionResult>
     .single();
 
   if (profileError || !profile) {
+    console.error('[loginAction] profile query failed:', profileError?.message);
     await supabase.auth.signOut();
     return { error: 'Account not found. Please contact support.' };
   }
 
-  if (profile.status === 'pending') {
+  if (profile.status !== 'approved') {
     await supabase.auth.signOut();
-    return { error: 'Your account is pending admin approval.' };
-  }
-
-  if (profile.status === 'rejected') {
-    await supabase.auth.signOut();
-    return { error: 'Your account has been rejected. Please contact support.' };
+    const msg =
+      profile.status === 'pending'
+        ? 'Your account is pending admin approval.'
+        : profile.status === 'rejected'
+          ? 'Your account has been rejected. Please contact support.'
+          : 'Your account is not active. Please contact support.';
+    return { error: msg };
   }
 
   redirect('/dashboard');
