@@ -38,6 +38,7 @@ export default function CreateAccountPage() {
   ) => {
     if (e.target.files?.[0]) {
       setFiles(prev => ({ ...prev, [field]: e.target.files![0] }));
+      if (error) setError('');
     }
   };
 
@@ -62,6 +63,7 @@ export default function CreateAccountPage() {
 
     if (result?.error) {
       setError(result.error);
+      setFiles({ secRegistration: null, orgCertificate: null });
     } else {
       setSuccess(true);
     }
@@ -222,6 +224,7 @@ export default function CreateAccountPage() {
                 className="hidden"
                 onChange={(e) => handleFileChange(e, 'secRegistration')}
                 accept=".pdf,.jpg,.jpeg,.png"
+                required
               />
               {files.secRegistration ? (
                 <>
@@ -242,6 +245,7 @@ export default function CreateAccountPage() {
                 className="hidden"
                 onChange={(e) => handleFileChange(e, 'orgCertificate')}
                 accept=".pdf,.jpg,.jpeg,.png"
+                required
               />
               {files.orgCertificate ? (
                 <>
