@@ -102,7 +102,7 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
       email,
       phone,
       sec_registration: secKey,
-      organization_certificate: orgCertKey,
+      organizational_certificate: orgCertKey,
       status: 'pending',
     });
 
