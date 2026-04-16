@@ -40,7 +40,7 @@ function LoginForm() {
     >
       {confirmed === 'true' && (
         <p className="mb-4 rounded-xl bg-green-50 px-4 py-3 text-center text-[10px] font-semibold text-green-700">
-          Email confirmed! You can now sign in.
+          Email confirmed! Your account is currently under review.
         </p>
       )}
 
