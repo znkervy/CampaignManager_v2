@@ -11,7 +11,7 @@ import { Suspense } from 'react';
 function LoginForm() {
   const searchParams = useSearchParams();
   const confirmed = searchParams.get('confirmed');
-  const confirmError = searchParams.get('error');
+  const urlError = searchParams.get('error');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,12 +21,14 @@ function LoginForm() {
     setLoading(true);
     setError('');
 
-    const fd = new FormData(event.currentTarget);
-    const result = await loginAction(fd);
-    setLoading(false);
-
-    if (result?.error) {
-      setError(result.error);
+    try {
+      const fd = new FormData(event.currentTarget);
+      const result = await loginAction(fd);
+      if (result?.error) {
+        setError(result.error);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,19 +38,19 @@ function LoginForm() {
       description="Continue your journey of making an impact today."
       footerRightLabel="Verified"
     >
-      {confirmed && (
+      {confirmed === 'true' && (
         <p className="mb-4 rounded-xl bg-green-50 px-4 py-3 text-center text-[10px] font-semibold text-green-700">
           Email confirmed! You can now sign in.
         </p>
       )}
 
-      {confirmError === 'confirmation_failed' && (
+      {urlError === 'confirmation_failed' && (
         <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-center text-[10px] font-semibold text-red-700">
           Email confirmation failed or the link has expired. Please request a new one.
         </p>
       )}
 
-      {confirmError === 'missing_code' && (
+      {urlError === 'missing_code' && (
         <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-center text-[10px] font-semibold text-red-700">
           Invalid confirmation link. Please use the link from your email.
         </p>
@@ -114,7 +116,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<AuthShell title="Welcome Back" description="Continue your journey of making an impact today." footerRightLabel="Verified"><div /></AuthShell>}>
       <LoginForm />
     </Suspense>
   );
