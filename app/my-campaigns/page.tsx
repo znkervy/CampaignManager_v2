@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
+
 import Image from 'next/image';
+import Link from 'next/link';
 import { MoreVertical, Plus, Search, TrendingUp, Users } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 
@@ -40,7 +43,34 @@ const campaigns = [
   },
 ];
 
+const extendedCampaigns = Array.from({ length: 24 }).map((_, i) => {
+  const base = campaigns[i % 3];
+  return {
+    ...base,
+    name: i < 3 ? base.name : `${base.name} - Unit ${i + 1}`
+  };
+});
+
 export default function MyCampaignsPage() {
+  const [filter, setFilter] = useState('All Campaigns');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredCampaigns = extendedCampaigns.filter((c) => {
+    if (filter === 'All Campaigns') return true;
+    return c.status === filter.toUpperCase();
+  });
+
+  const itemsPerPage = 3;
+  const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const displayedCampaigns = filteredCampaigns.slice(startIndex, startIndex + itemsPerPage);
+
+  const setPage = (p: number) => {
+    if (p < 1) p = 1;
+    if (p > totalPages) p = totalPages;
+    setCurrentPage(p);
+  };
+
   return (
     <AppShell searchPlaceholder="Search campaigns...">
       <div className="space-y-6">
@@ -52,23 +82,24 @@ export default function MyCampaignsPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="flex h-[52px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-7 text-[15px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)]"
+          <Link
+            href="/create-campaign"
+            className="flex h-[52px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-7 text-[15px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] transition-colors"
           >
             <Plus size={18} />
             Launch New Campaign
-          </button>
+          </Link>
         </div>
 
         <section className="rounded-[28px] bg-white p-4 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
           <div className="flex flex-col gap-4 px-2 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-2 text-[12px] font-bold">
-              {['All Campaigns', 'Active', 'Pending', 'Closed'].map((tab, index) => (
+              {['All Campaigns', 'Active', 'Pending', 'Closed'].map((tab) => (
                 <button
                   key={tab}
                   type="button"
-                  className={`rounded-xl px-4 py-2 ${index === 0 ? 'bg-[#fff1ed] text-[#cc6d58]' : 'text-[#8a7b76]'}`}
+                  onClick={() => { setFilter(tab); setCurrentPage(1); }}
+                  className={`rounded-xl px-4 py-2 transition-colors ${tab === filter ? 'bg-[#fff1ed] text-[#cc6d58]' : 'text-[#8a7b76] hover:bg-[#f7f4f3]'}`}
                 >
                   {tab}
                 </button>
@@ -98,8 +129,8 @@ export default function MyCampaignsPage() {
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map((campaign) => (
-                  <tr key={campaign.name} className="border-b border-[#f4ebea]">
+                {displayedCampaigns.map((campaign, index) => (
+                  <tr key={index} className="border-b border-[#f4ebea]">
                     <td className="px-4 py-5">
                       <div className="flex items-center gap-3">
                         <div className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-extrabold ${campaign.avatarColor} ${campaign.avatarColor === 'bg-[#102f4c]' ? 'text-white' : 'text-[#8a7b76]'}`}>
@@ -133,19 +164,50 @@ export default function MyCampaignsPage() {
           </div>
 
           <div className="flex flex-col gap-4 px-4 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[13px] text-[#80716c]">Showing 3 of 24 campaigns</p>
+            <p className="text-[13px] text-[#80716c]">
+              Showing {filteredCampaigns.length === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredCampaigns.length)} of {filteredCampaigns.length} campaigns
+            </p>
             <div className="flex items-center gap-2 text-[12px] font-bold">
-              {['‹', '1', '2', '›'].map((page, index) => (
-                <button
-                  key={page + index}
-                  type="button"
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                    page === '1' ? 'bg-[#b55247] text-white' : 'border border-[#efdfdb] text-[#8c7d78]'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#efdfdb] text-[#8c7d78] disabled:opacity-50 hover:bg-[#f7f4f3] transition-colors"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages })
+                .map((_, i) => i + 1)
+                .filter(page => {
+                  let startPage = Math.max(1, currentPage - 2);
+                  let endPage = Math.min(totalPages, startPage + 4);
+                  if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                  }
+                  return page >= startPage && page <= endPage;
+                })
+                .map((page) => {
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setPage(page)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                      page === currentPage ? 'bg-[#b55247] text-white' : 'border border-[#efdfdb] text-[#8c7d78] hover:bg-[#f7f4f3]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#efdfdb] text-[#8c7d78] disabled:opacity-50 hover:bg-[#f7f4f3] transition-colors"
+              >
+                ›
+              </button>
             </div>
           </div>
         </section>

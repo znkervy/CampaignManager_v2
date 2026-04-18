@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   CalendarDays,
   CircleDollarSign,
@@ -74,10 +75,30 @@ const transactions = [
   },
 ];
 
+const extendedTransactions = Array.from({ length: 1241 }).map((_, i) => {
+  const base = transactions[i % transactions.length];
+  return {
+    ...base,
+    id: i,
+  };
+});
+
 export default function ReportsPage() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(extendedTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const displayedTransactions = extendedTransactions.slice(startIndex, startIndex + itemsPerPage);
+
+  const setPage = (p: number) => {
+    if (p < 1) p = 1;
+    if (p > totalPages) p = totalPages;
+    setCurrentPage(p);
+  };
+
   return (
     <AppShell searchPlaceholder="Search reports...">
-      <div className="mx-auto max-w-[1120px] space-y-6 pb-28">
+      <div className="w-full space-y-6 pb-28">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">Financial Reports &amp; Insights</h1>
@@ -221,8 +242,8 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((transaction) => (
-                  <tr key={`${transaction.donor}-${transaction.date}`} className="border-b border-[#f4ebea]">
+                {displayedTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b border-[#f4ebea]">
                     <td className="px-7 py-5 whitespace-pre-line text-[13px] font-medium leading-[1.35] text-[#6f605c]">{transaction.date}</td>
                     <td className="px-4 py-5">
                       <div className="flex items-center gap-3">
@@ -257,19 +278,48 @@ export default function ReportsPage() {
           </div>
 
           <div className="flex flex-col gap-4 px-7 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[13px] text-[#80716c]">Showing 1-10 of 1,241 transactions</p>
+            <p className="text-[13px] text-[#80716c]">
+              Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, extendedTransactions.length)} of {extendedTransactions.length} transactions
+            </p>
             <div className="flex items-center gap-2 text-[12px] font-bold">
-              {['<', '1', '2', '3', '>'].map((page, index) => (
-                <button
-                  key={`${page}-${index}`}
-                  type="button"
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                    page === '1' ? 'bg-[#b55247] text-white' : 'border border-[#efdfdb] text-[#8c7d78]'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#efdfdb] text-[#8c7d78] disabled:opacity-50 hover:bg-[#f7f4f3] transition-colors"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages })
+                .map((_, i) => i + 1)
+                .filter(page => {
+                  let startPage = Math.max(1, currentPage - 2);
+                  let endPage = Math.min(totalPages, startPage + 4);
+                  if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                  }
+                  return page >= startPage && page <= endPage;
+                })
+                .map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setPage(page)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                      page === currentPage ? 'bg-[#b55247] text-white' : 'border border-[#efdfdb] text-[#8c7d78] hover:bg-[#f7f4f3]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              <button
+                type="button"
+                onClick={() => setPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#efdfdb] text-[#8c7d78] disabled:opacity-50 hover:bg-[#f7f4f3] transition-colors"
+              >
+                ›
+              </button>
             </div>
           </div>
         </section>
