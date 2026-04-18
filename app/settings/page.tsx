@@ -55,6 +55,7 @@ export default function SettingsPage() {
 
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
@@ -76,13 +77,28 @@ export default function SettingsPage() {
             <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-[18px] font-extrabold text-[#382b28]">Profile Settings</h2>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="flex h-[42px] items-center justify-center rounded-full bg-[#b55247] px-5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] transition-colors"
-                >
-                  Save Changes
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                    className="flex h-[42px] items-center justify-center rounded-full border border-[#f0e7e3] bg-white px-5 text-[13px] font-bold text-[#7d6a64] transition-colors hover:bg-[#faf7f5]"
+                  >
+                    {isEditingProfile ? 'Cancel' : 'Edit'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEditingProfile) {
+                        handleSave();
+                        setIsEditingProfile(false);
+                      }
+                    }}
+                    disabled={!isEditingProfile}
+                    className="flex h-[42px] items-center justify-center rounded-full bg-[#b55247] px-5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-colors hover:bg-[#a0483e] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
 
               <div className="mt-6 grid gap-5 md:grid-cols-[160px_minmax(0,1fr)]">
@@ -106,10 +122,11 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <InputChip label="Full Name" value={profile.name} onChange={(v) => setProfile({ ...profile, name: v })} />
-                    <InputChip label="Email Address" value={profile.email} onChange={(v) => setProfile({ ...profile, email: v })} />
+                    <InputChip readOnly={!isEditingProfile} label="Full Name" value={profile.name} onChange={(v) => setProfile({ ...profile, name: v })} />
+                    <InputChip readOnly={!isEditingProfile} label="Email Address" value={profile.email} onChange={(v) => setProfile({ ...profile, email: v })} />
                   </div>
                   <InputArea
+                    readOnly={!isEditingProfile}
                     label="Bio"
                     value={profile.bio}
                     onChange={(v) => setProfile({ ...profile, bio: v })}
@@ -319,27 +336,29 @@ export default function SettingsPage() {
   );
 }
 
-function InputChip({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
+function InputChip({ label, value, onChange, readOnly }: { label: string; value: string; onChange: (val: string) => void; readOnly?: boolean }) {
   return (
     <div>
       <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</p>
       <input 
         value={value} 
         onChange={(e) => onChange(e.target.value)} 
-        className="mt-3 w-full rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] font-medium text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
+        readOnly={readOnly}
+        className={`mt-3 w-full rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] font-medium text-[#5d4c48] outline-none transition-colors focus:ring-2 focus:ring-[#f5ece8] ${readOnly ? 'opacity-70 cursor-not-allowed hidden-selection' : ''}`} 
       />
     </div>
   );
 }
 
-function InputArea({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
+function InputArea({ label, value, onChange, readOnly }: { label: string; value: string; onChange: (val: string) => void; readOnly?: boolean }) {
   return (
     <div>
       <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</p>
       <textarea 
         value={value} 
         onChange={(e) => onChange(e.target.value)} 
-        className="mt-3 min-h-[108px] w-full resize-none rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] leading-7 text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
+        readOnly={readOnly}
+        className={`mt-3 min-h-[108px] w-full resize-none rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] leading-7 text-[#5d4c48] outline-none transition-colors focus:ring-2 focus:ring-[#f5ece8] ${readOnly ? 'opacity-70 cursor-not-allowed hidden-selection' : ''}`} 
       />
     </div>
   );

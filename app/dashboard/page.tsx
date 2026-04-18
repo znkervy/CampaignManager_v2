@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import {
   Bell,
@@ -124,6 +126,13 @@ const liveActivities = [
 ];
 
 export default function DashboardPage() {
+  const [activeFilter, setActiveFilter] = useState('All');
+
+  const filteredCampaigns = campaigns.filter((campaign) => {
+    if (activeFilter === 'All') return true;
+    return campaign.status.toUpperCase() === activeFilter.toUpperCase();
+  });
+
   return (
     <AppShell>
       <div className="w-full">
@@ -158,12 +167,13 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-4 border-b border-[#f4ebea] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-[18px] font-extrabold text-[#382b28]">My Campaigns</h2>
                 <div className="flex flex-wrap gap-2 text-[11px] font-bold">
-                  {['All', 'Active', 'Pending', 'Completed'].map((tab, index) => (
+                  {['All', 'Active', 'Pending', 'Completed'].map((tab) => (
                     <button
                       key={tab}
                       type="button"
-                      className={`rounded-lg px-4 py-1.5 ${
-                        index === 0 ? 'bg-[#fff6f2] text-[#d36f5d]' : 'bg-[#faf7f5] text-[#8a7b76]'
+                      onClick={() => setActiveFilter(tab)}
+                      className={`rounded-lg px-4 py-1.5 transition-colors ${
+                        activeFilter === tab ? 'bg-[#fff6f2] text-[#d36f5d]' : 'bg-[#faf7f5] text-[#8a7b76] hover:bg-[#f2eee9]'
                       }`}
                     >
                       {tab}
@@ -184,7 +194,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {campaigns.map((campaign) => (
+                    {filteredCampaigns.map((campaign) => (
                       <tr key={campaign.title} className="border-t border-[#f4ebea]">
                         <td className="px-4 py-5 align-top">
                           <div className="flex items-center gap-3">
@@ -268,13 +278,13 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                className="mt-5 flex h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[#b55247] text-[14px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)]"
+              <Link
+                href="/create-campaign"
+                className="mt-5 flex h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[#b55247] text-[14px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-colors hover:bg-[#9d463d]"
               >
                 <Plus size={16} />
                 New Campaign
-              </button>
+              </Link>
 
               <button type="button" className="mt-4 w-full text-center text-[11px] font-bold text-[#c96a5b]">
                 View All Activity
