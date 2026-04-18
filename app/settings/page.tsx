@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import { BellDot, ChevronRight, CreditCard, ShieldCheck, UserRound } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 
@@ -40,6 +41,26 @@ const bankingItems = [
 ];
 
 export default function SettingsPage() {
+  const [profile, setProfile] = useState({
+    name: 'Elena Rodriguez',
+    email: 'elena.r@warmauthorit',
+    bio: 'Dedicated to building sustainable communities and fostering impactful change through global transparency.',
+  });
+
+  const [notifications, setNotifications] = useState({
+    'Campaign Milestones': true,
+    'New Donations': true,
+    'Admin Messages': false,
+  });
+
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = () => {
+    alert('Changes saved successfully!');
+  };
+
   return (
     <AppShell searchPlaceholder="Search campaign settings...">
       <div className="w-full space-y-6 pb-32">
@@ -57,7 +78,8 @@ export default function SettingsPage() {
                 <h2 className="text-[18px] font-extrabold text-[#382b28]">Profile Settings</h2>
                 <button
                   type="button"
-                  className="flex h-[42px] items-center justify-center rounded-full bg-[#b55247] px-5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)]"
+                  onClick={handleSave}
+                  className="flex h-[42px] items-center justify-center rounded-full bg-[#b55247] px-5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] transition-colors"
                 >
                   Save Changes
                 </button>
@@ -76,19 +98,21 @@ export default function SettingsPage() {
                       <BellDot size={16} />
                     </button>
                   </div>
-                  <button type="button" className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.06em] text-[#8f817d]">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.06em] text-[#8f817d] transition-colors hover:text-[#c86a5d]">
                     Update Photo
                   </button>
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={() => alert('Photo selected successfully!')} />
                 </div>
 
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <InputChip label="Full Name" value="Elena Rodriguez" />
-                    <InputChip label="Email Address" value="elena.r@warmauthorit" />
+                    <InputChip label="Full Name" value={profile.name} onChange={(v) => setProfile({ ...profile, name: v })} />
+                    <InputChip label="Email Address" value={profile.email} onChange={(v) => setProfile({ ...profile, email: v })} />
                   </div>
                   <InputArea
                     label="Bio"
-                    value="Dedicated to building sustainable communities and fostering impactful change through global transparency."
+                    value={profile.bio}
+                    onChange={(v) => setProfile({ ...profile, bio: v })}
                   />
                 </div>
               </div>
@@ -100,7 +124,7 @@ export default function SettingsPage() {
                   <h2 className="text-[18px] font-extrabold text-[#382b28]">Banking &amp; Payouts</h2>
                   <p className="mt-1 text-[13px] text-[#8d7d78]">Linked accounts for fund disbursement</p>
                 </div>
-                <button type="button" className="text-[12px] font-bold text-[#c96a5b]">
+                <button type="button" onClick={() => setShowAddAccountModal(true)} className="text-[12px] font-bold text-[#c96a5b] transition-colors hover:text-[#a0483e]">
                   + Add Account
                 </button>
               </div>
@@ -143,25 +167,25 @@ export default function SettingsPage() {
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Notifications</h2>
 
               <div className="mt-5 space-y-5">
-                {[
-                  ['Campaign Milestones', 'Goal at 50% / 100% met', true],
-                  ['New Donations', 'Instant alerts for every gift', true],
-                  ['Admin Messages', 'Critical system updates', false],
-                ].map(([title, copy, enabled]) => (
+                {Object.entries(notifications).map(([title, enabled]) => {
+                  const copy = title === 'Campaign Milestones' ? 'Goal at 50% / 100% met' : title === 'New Donations' ? 'Instant alerts for every gift' : 'Critical system updates';
+                  return (
                   <div key={title} className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[14px] font-bold text-[#433330]">{title}</p>
                       <p className="mt-1 text-[12px] text-[#8d7d78]">{copy}</p>
                     </div>
-                    <div
-                      className={`flex h-7 w-12 items-center rounded-full px-1 ${
+                    <button
+                      type="button"
+                      onClick={() => setNotifications({ ...notifications, [title]: !enabled })}
+                      className={`flex h-7 w-12 cursor-pointer items-center rounded-full px-1 transition-colors ${
                         enabled ? 'justify-end bg-[#fde8e5]' : 'justify-start bg-[#f0ece9]'
                       }`}
                     >
-                      <span className={`h-5 w-5 rounded-full ${enabled ? 'bg-[#ef8f86]' : 'bg-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]'}`} />
-                    </div>
+                      <span className={`h-5 w-5 rounded-full transition-transform ${enabled ? 'bg-[#ef8f86]' : 'bg-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]'}`} />
+                    </button>
                   </div>
-                ))}
+                )})}
               </div>
             </section>
 
@@ -192,7 +216,8 @@ export default function SettingsPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="flex h-[46px] items-center justify-center rounded-full bg-[#d72617] px-6 text-[14px] font-bold text-white shadow-[0_10px_22px_rgba(215,38,23,0.22)]"
+              onClick={() => setShowDeactivateModal(true)}
+              className="flex h-[46px] items-center justify-center rounded-full bg-[#d72617] px-6 text-[14px] font-bold text-white shadow-[0_10px_22px_rgba(215,38,23,0.22)] transition-colors hover:bg-[#c22214]"
             >
               Deactivate Account
             </button>
@@ -203,24 +228,119 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#2e2523]/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[28px] bg-white p-6 shadow-2xl">
+            <h3 className="text-[20px] font-extrabold text-[#382b28]">Deactivate Account</h3>
+            <p className="mt-3 text-[14px] leading-relaxed text-[#8d7d78]">
+              Are you sure you want to deactivate your account? This action cannot be undone. Please enter your password to confirm.
+            </p>
+            <input 
+              type="password" 
+              placeholder="Enter password" 
+              className="mt-5 w-full rounded-xl bg-[#f7f4f3] px-4 py-3 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              <button 
+                type="button"
+                onClick={() => setShowDeactivateModal(false)} 
+                className="rounded-full px-5 py-2.5 text-[13px] font-bold text-[#8d7d78] transition-colors hover:bg-[#f7f4f3]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  alert('Account deactivated!');
+                  setShowDeactivateModal(false);
+                }} 
+                className="rounded-full bg-[#d72617] px-6 py-2.5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(215,38,23,0.22)] transition-colors hover:bg-[#c22214]"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddAccountModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#2e2523]/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl">
+            <h3 className="text-[20px] font-extrabold text-[#382b28]">Add Bank Account</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-[#8d7d78]">
+              Enter your banking details to safely receive campaign payouts.
+            </p>
+            
+            <div className="mt-5 space-y-4">
+              <div>
+                <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Cardholder Name</label>
+                <input type="text" placeholder="Sarah Jenkins" className="mt-2 w-full rounded-xl bg-[#f7f4f3] px-4 py-3 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" />
+              </div>
+              <div>
+                <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Card Number</label>
+                <input type="text" placeholder="0000 0000 0000 0000" className="mt-2 w-full rounded-xl bg-[#f7f4f3] px-4 py-3 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Expiry Date</label>
+                  <input type="text" placeholder="MM/YY" className="mt-2 w-full rounded-xl bg-[#f7f4f3] px-4 py-3 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">CVC</label>
+                  <input type="text" placeholder="123" className="mt-2 w-full rounded-xl bg-[#f7f4f3] px-4 py-3 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button 
+                type="button"
+                onClick={() => setShowAddAccountModal(false)} 
+                className="rounded-full px-5 py-2.5 text-[13px] font-bold text-[#8d7d78] transition-colors hover:bg-[#f7f4f3]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  alert('Bank Account Added Successfully!');
+                  setShowAddAccountModal(false);
+                }} 
+                className="rounded-full bg-[#b55247] px-6 py-2.5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-colors hover:bg-[#a0483e]"
+              >
+                Add Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
 
-function InputChip({ label, value }: { label: string; value: string }) {
+function InputChip({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
   return (
     <div>
       <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</p>
-      <div className="mt-3 rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] font-medium text-[#5d4c48]">{value}</div>
+      <input 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)} 
+        className="mt-3 w-full rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] font-medium text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
+      />
     </div>
   );
 }
 
-function InputArea({ label, value }: { label: string; value: string }) {
+function InputArea({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
   return (
     <div>
       <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</p>
-      <div className="mt-3 min-h-[108px] rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] leading-7 text-[#5d4c48]">{value}</div>
+      <textarea 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)} 
+        className="mt-3 min-h-[108px] w-full resize-none rounded-[18px] bg-[#f7f4f3] px-5 py-4 text-[14px] leading-7 text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
+      />
     </div>
   );
 }

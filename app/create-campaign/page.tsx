@@ -23,6 +23,9 @@ import {
   MapPin,
   Mountain,
   Plus,
+  Pencil,
+  Building2,
+  CheckCircle2,
   ReceiptText,
   ShieldAlert,
   ShieldCheck,
@@ -31,7 +34,8 @@ import {
   Undo2,
   UserSquare2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import Link from 'next/link';
 import AppShell from '../../components/AppShell';
 
 const steps = [
@@ -44,13 +48,15 @@ const steps = [
 
 const categories = [
   { label: 'Health', icon: BriefcaseMedical },
-  { label: 'Education', icon: GraduationCap, active: true },
+  { label: 'Education', icon: GraduationCap },
   { label: 'Environment', icon: Mountain },
   { label: 'Disaster', icon: ShieldAlert },
 ];
 
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const nextStep = () => setCurrentStep((step) => Math.min(step + 1, 5));
   const previousStep = () => setCurrentStep((step) => Math.max(step - 1, 1));
@@ -64,7 +70,7 @@ export default function CreateCampaignPage() {
           ? 'Beneficiary Details'
           : currentStep === 4
             ? 'Documents & Legal'
-            : 'Final Review';
+            : !isSubmitted ? 'Review Your Campaign' : '';
 
   const stepDescription =
     currentStep === 1
@@ -75,7 +81,7 @@ export default function CreateCampaignPage() {
           ? 'Please provide the details of the person or organization who will receive the funds collected from this campaign.'
           : currentStep === 4
             ? 'To ensure trust and transparency within the HOPECARD community, we require official documentation to verify your campaign\'s legitimacy.'
-            : 'Review your campaign setup before submitting it for approval.';
+            : !isSubmitted ? 'Almost there! Please double-check the details of your campaign below. Once submitted, it will be reviewed by our team for authenticity and safety.' : '';
 
   const nextLabel =
     currentStep === 1
@@ -91,34 +97,38 @@ export default function CreateCampaignPage() {
   return (
     <AppShell searchPlaceholder="Search campaigns...">
       <div className="w-full space-y-6 pb-10">
-        <div>
-          <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">{stepTitle}</h1>
-          <p className="mt-2 max-w-[860px] text-[15px] text-[#84716b]">{stepDescription}</p>
-        </div>
+        {!isSubmitted ? (
+          <>
+            <div>
+              <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">{stepTitle}</h1>
+              <p className="mt-2 max-w-[860px] text-[15px] text-[#84716b]">{stepDescription}</p>
+            </div>
 
-        <section className="rounded-[28px] bg-white px-4 py-5 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:px-6">
-          <div className="relative grid grid-cols-5 items-start">
-            <div className="pointer-events-none absolute left-[4%] right-[4%] top-4 h-px bg-[#ece3df]" />
-            {steps.map((step) => (
-              <div key={step.label} className="relative flex flex-col items-center">
-                <div
-                  className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-extrabold ${
-                    step.number === currentStep ? 'bg-[#b55247] text-white' : 'bg-[#efebe9] text-[#8e7f7a]'
-                  }`}
-                >
-                  {step.number}
-                </div>
-                <span
-                  className={`mt-4 text-center text-[10px] font-extrabold uppercase tracking-[0.06em] ${
-                    step.number === currentStep ? 'text-[#b55247]' : 'text-[#6f5f5b]'
-                  }`}
-                >
-                  {step.label}
-                </span>
+            <section className="rounded-[28px] bg-white px-4 py-5 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:px-6">
+              <div className="relative grid grid-cols-5 items-start">
+                <div className="pointer-events-none absolute left-[4%] right-[4%] top-4 h-px bg-[#ece3df]" />
+                {steps.map((step) => (
+                  <div key={step.label} className="relative flex flex-col items-center">
+                    <div
+                      className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-extrabold ${
+                        step.number === currentStep ? 'bg-[#b55247] text-white' : 'bg-[#efebe9] text-[#8e7f7a]'
+                      }`}
+                    >
+                      {step.number}
+                    </div>
+                    <span
+                      className={`mt-4 text-center text-[10px] font-extrabold uppercase tracking-[0.06em] ${
+                        step.number === currentStep ? 'text-[#b55247]' : 'text-[#6f5f5b]'
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          </>
+        ) : null}
 
         {currentStep === 1 ? (
           <>
@@ -131,20 +141,24 @@ export default function CreateCampaignPage() {
                 <div>
                   <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category</label>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {categories.map(({ label, icon: Icon, active }) => (
+                    {categories.map(({ label, icon: Icon }) => {
+                      const active = activeCategory === label;
+                      return (
                       <button
                         key={label}
                         type="button"
-                        className={`flex h-[82px] flex-col items-center justify-center rounded-[20px] border text-center ${
+                        onClick={() => setActiveCategory(label)}
+                        className={`flex h-[82px] flex-col items-center justify-center rounded-[20px] border text-center transition-colors ${
                           active
                             ? 'border-[#c97a6d] bg-[#fff9f8] text-[#b55247]'
-                            : 'border-transparent bg-[#f7f4f3] text-[#6e5f5b]'
+                            : 'border-transparent bg-[#f7f4f3] text-[#6e5f5b] hover:bg-[#f2ecea]'
                         }`}
                       >
                         <Icon size={18} />
                         <span className="mt-2 text-[12px] font-bold">{label}</span>
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -179,32 +193,29 @@ export default function CreateCampaignPage() {
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Visual Impact</h2>
               <p className="mt-2 text-[13px] text-[#8d7d78]">High-quality visuals increase donations by up to 3x.</p>
 
-              <button
-                type="button"
-                className="mt-6 flex min-h-[280px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center"
+              <DragDropUploader
+                className="mt-6 flex min-h-[280px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f7e9e6] text-[#b55247]">
                   <Camera size={24} />
                 </div>
                 <p className="mt-5 text-[18px] font-bold text-[#4a3936]">Upload main cover photo</p>
                 <p className="mt-2 text-[12px] font-medium text-[#9a8d88]">Recommended size: 1200 x 675px</p>
-              </button>
+              </DragDropUploader>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <button
-                  type="button"
-                  className="flex h-[138px] items-center justify-center rounded-[24px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] text-[#6f5f5b]"
+                <DragDropUploader
+                  className="flex h-[138px] items-center justify-center rounded-[24px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] text-[#6f5f5b] hover:bg-[#fff9f8]"
                 >
                   <ImagePlus size={20} />
-                </button>
+                </DragDropUploader>
                 {[1, 2, 3].map((slot) => (
-                  <button
+                  <DragDropUploader
                     key={slot}
-                    type="button"
-                    className="flex h-[138px] items-center justify-center rounded-[24px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] text-[#6f5f5b]"
+                    className="flex h-[138px] items-center justify-center rounded-[24px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] text-[#6f5f5b] hover:bg-[#fff9f8]"
                   >
                     <Plus size={20} />
-                  </button>
+                  </DragDropUploader>
                 ))}
               </div>
             </section>
@@ -217,22 +228,21 @@ export default function CreateCampaignPage() {
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Financial Objectives</h2>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
-                <InputBlock label="Monetary Goal" placeholder="0.00" icon={BadgeDollarSign} iconColor="text-[#b79d45]" />
-                <InputBlock label="Minimum Donation" placeholder="5.00" icon={HandCoins} />
+                <InputBlock label="Monetary Goal" placeholder="0.00" icon={BadgeDollarSign} iconColor="text-[#b79d45]" type="number" />
+                <InputBlock label="Minimum Donation" placeholder="5.00" icon={HandCoins} type="number" />
               </div>
 
               <div className="mt-5">
                 <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Goal Deadline</label>
-                <div className="mt-3 flex h-[52px] items-center justify-between rounded-full bg-[#f7f4f3] px-5">
-                  <div className="flex items-center gap-3">
-                    <CalendarDays size={16} className="text-[#9a8d88]" />
+                <div className="relative mt-3 flex h-[52px] items-center justify-between rounded-full bg-[#f7f4f3] px-5 group">
+                  <div className="flex w-full items-center gap-3">
+                    <CalendarDays size={16} className="relative z-10 pointer-events-none text-[#9a8d88]" />
                     <input
-                      type="text"
-                      placeholder="mm/dd/yyyy"
-                      className="w-full bg-transparent text-[14px] text-[#6d5d59] outline-none placeholder:text-[#b9aeaa]"
+                      type="date"
+                      className="relative z-20 w-full bg-transparent text-[14px] text-[#6d5d59] outline-none [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                     />
                   </div>
-                  <CalendarDays size={16} className="text-[#9a8d88]" />
+                  <CalendarDays size={16} className="absolute right-5 z-10 pointer-events-none text-[#9a8d88]" />
                 </div>
                 <p className="mt-2 text-[11px] text-[#a19490]">Campaigns typically run for 30-60 days for maximum impact.</p>
               </div>
@@ -295,16 +305,15 @@ export default function CreateCampaignPage() {
                 Upload a clear copy of a government-issued ID to verify the beneficiary&apos;s identity.
               </p>
 
-              <button
-                type="button"
-                className="mt-5 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center"
+              <DragDropUploader
+                className="mt-5 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"
               >
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#b5a7a2] shadow-[0_8px_18px_rgba(87,55,48,0.04)]">
                   <CloudUpload size={20} />
                 </div>
                 <p className="mt-5 text-[16px] font-bold text-[#4a3936]">Click to upload or drag and drop</p>
                 <p className="mt-2 text-[11px] font-medium text-[#9a8d88]">PDF, JPG or PNG (max. 10MB)</p>
-              </button>
+              </DragDropUploader>
             </section>
 
             <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
@@ -404,6 +413,156 @@ export default function CreateCampaignPage() {
         ) : null}
 
         {currentStep === 5 ? (
+          !isSubmitted ? (
+            <>
+              <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
+                <div className="flex items-center justify-between border-b border-[#f5ece8] pb-6">
+                  <h2 className="text-[18px] font-extrabold text-[#382b28]">Campaign Basics</h2>
+                  <button type="button" onClick={() => setCurrentStep(1)} className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#c96a5b] transition-colors hover:text-[#b55247]">
+                    <Pencil size={12} />
+                    EDIT
+                  </button>
+                </div>
+                <div className="pt-6">
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Campaign Title</label>
+                      <p className="mt-2 text-[15px] font-bold text-[#382b28]">Clean Water Initiative: Central Valley Community</p>
+                    </div>
+                    <div className="col-span-2 grid grid-cols-2 gap-8">
+                      <div>
+                        <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category</label>
+                        <p className="mt-2 text-[14px] font-medium text-[#4a3936]">Environmental / Community</p>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Location</label>
+                        <p className="mt-2 text-[14px] font-medium text-[#4a3936]">Bakersfield, CA</p>
+                      </div>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Story Summary</label>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[#6d5d59]">Our goal is to provide sustainable filtration systems to over 500 households in the Central Valley region who currently lack access to clean drinking water. This initiative covers the installation and 2 years of maintenance...</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-[18px] font-extrabold text-[#382b28]">Goal &amp; Timeline</h2>
+                  <button type="button" onClick={() => setCurrentStep(2)} className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#c96a5b] transition-colors hover:text-[#b55247]">
+                    <Pencil size={12} />
+                    EDIT
+                  </button>
+                </div>
+                <div className="mt-6 grid grid-cols-2 gap-6">
+                  <div className="rounded-[20px] bg-[#f7f4f3] p-5">
+                    <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Target Amount</label>
+                    <p className="mt-2 text-[22px] font-bold text-[#382b28]">$25,000.00</p>
+                    <p className="mt-1 text-[11px] text-[#9a8d88]">USD - US Dollars</p>
+                  </div>
+                  <div className="rounded-[20px] bg-[#f7f4f3] p-5">
+                    <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Deadline</label>
+                    <p className="mt-2 text-[22px] font-bold text-[#382b28]">Nov 15</p>
+                    <p className="mt-1 text-[11px] text-[#9a8d88]">2024 (45 Days Remaining)</p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-[18px] font-extrabold text-[#382b28]">Beneficiary &amp; Bank</h2>
+                  <button type="button" onClick={() => setCurrentStep(3)} className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#c96a5b] transition-colors hover:text-[#b55247]">
+                    <Pencil size={12} />
+                    EDIT
+                  </button>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fce5c8] text-[#d98b2c]">
+                        <Building2 size={18} />
+                      </div>
+                      <div>
+                        <h3 className="text-[14px] font-bold text-[#382b28]">Valley Hope Non-Profit Org</h3>
+                        <p className="text-[11px] text-[#8e7f7a]">Tax ID: 12-3456789</p>
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-[#e8f5ec] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.05em] text-[#2ba05b]">Verified</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#8e7f7a] shadow-sm">
+                        <Banknote size={18} />
+                      </div>
+                      <p className="text-[14px] font-bold text-[#382b28]">Chase Bank •••• 9921</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[#2ba05b]">
+                      <CheckCircle2 size={14} />
+                      <span className="text-[10px] font-extrabold uppercase tracking-[0.05em]">Bank Connected</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-[18px] font-extrabold text-[#382b28]">Document Verification</h2>
+                  <button type="button" onClick={() => setCurrentStep(4)} className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#c96a5b] transition-colors hover:text-[#b55247]">
+                    <Pencil size={12} />
+                    EDIT
+                  </button>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
+                    <div className="flex items-center gap-3">
+                      <FileText size={16} className="text-[#b55247]" />
+                      <span className="text-[13px] font-bold text-[#382b28]">National Identity Document</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={14} className="text-[#2ba05b]" />
+                      <span className="text-[11px] font-medium text-[#6d5d59]">ID_FRONT_SARAH.JPG</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck size={16} className="text-[#b55247]" />
+                      <span className="text-[13px] font-bold text-[#382b28]">Non-Profit Certification (501c3)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={14} className="text-[#2ba05b]" />
+                      <span className="text-[11px] font-medium text-[#6d5d59]">IRS_LETTER_VH.PDF</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              
+              <div className="flex flex-col gap-4 pb-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={previousStep}
+                  className="text-left text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#7e6d68] transition-colors hover:text-[#b55247]"
+                >
+                  Back
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsSubmitted(true)}
+                  className="flex h-[48px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-8 text-[13px] font-extrabold uppercase tracking-[0.05em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-all hover:bg-[#a0483e]"
+                >
+                  Submit For Approval
+                  <ArrowRight size={15} />
+                </button>
+              </div>
+
+              <div className="rounded-[20px] bg-white px-5 py-4 text-center text-[13px] text-[#8d7d78] shadow-[0_12px_32px_rgba(87,55,48,0.05)] ring-1 ring-[#f5ece8]">
+                Need help with your final submission? <span className="font-semibold text-[#c96a5b]">Chat with Support</span> or visit our <span className="font-semibold text-[#c96a5b]">Help Center.</span>
+              </div>
+            </>
+          ) : (
           <>
             <section className="rounded-[30px] bg-white px-6 py-8 text-center shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:px-8">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#f58f86] text-white shadow-[0_16px_32px_rgba(245,143,134,0.28)]">
@@ -445,16 +604,16 @@ export default function CreateCampaignPage() {
               </div>
 
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <button
-                  type="button"
+                <Link
+                  href="/my-campaigns"
                   className="flex h-[46px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-7 text-[13px] font-extrabold uppercase tracking-[0.04em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)]"
                 >
                   View My Campaigns
                   <ArrowRight size={14} />
-                </button>
-                <button type="button" className="text-[12px] font-extrabold uppercase tracking-[0.05em] text-[#7f6f6a]">
+                </Link>
+                <Link href="/dashboard" className="text-[12px] font-extrabold uppercase tracking-[0.05em] text-[#7f6f6a]">
                   Back to Dashboard
-                </button>
+                </Link>
               </div>
             </section>
 
@@ -463,6 +622,7 @@ export default function CreateCampaignPage() {
               <span className="font-semibold text-[#c96a5b]">Help Center.</span>
             </div>
           </>
+          )
         ) : null}
 
         {currentStep !== 5 ? (
@@ -498,11 +658,13 @@ function InputBlock({
   placeholder,
   icon: Icon,
   iconColor = 'text-[#9a8d88]',
+  type = 'text',
 }: {
   label: string;
   placeholder: string;
   icon?: typeof FileText;
   iconColor?: string;
+  type?: string;
 }) {
   return (
     <div>
@@ -510,9 +672,11 @@ function InputBlock({
       <div className="mt-3 flex h-[52px] items-center gap-3 rounded-full bg-[#f7f4f3] px-5">
         {Icon ? <Icon size={16} className={iconColor} /> : null}
         <input
-          type="text"
+          type={type}
           placeholder={placeholder}
-          className="w-full bg-transparent text-[14px] text-[#6d5d59] outline-none placeholder:text-[#b9aeaa]"
+          className={`w-full bg-transparent text-[14px] text-[#6d5d59] outline-none placeholder:text-[#b9aeaa] ${
+            type === 'number' ? '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none' : ''
+          }`}
         />
       </div>
     </div>
@@ -533,9 +697,8 @@ function DocumentUpload({
   return (
     <div>
       <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</label>
-      <button
-        type="button"
-        className="mt-3 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center"
+      <DragDropUploader
+        className="mt-3 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"
       >
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#b5a7a2] shadow-[0_8px_18px_rgba(87,55,48,0.04)]">
           <Icon size={20} />
@@ -543,7 +706,45 @@ function DocumentUpload({
         <p className="mt-5 text-[16px] font-bold text-[#4a3936]">{title}</p>
         <p className="mt-2 text-[11px] font-medium text-[#9a8d88]">{subtitle}</p>
         <span className="mt-4 rounded-full bg-[#f8eae7] px-4 py-2 text-[11px] font-bold text-[#c96a5b]">Select File</span>
-      </button>
+      </DragDropUploader>
+    </div>
+  );
+}
+
+function DragDropUploader({ className, children }: { className?: string; children: React.ReactNode }) {
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    // Future handling of e.dataTransfer.files can go here
+  };
+
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`${className} cursor-pointer transition-all ${
+        isDragging ? 'border-[#c97a6d] bg-[#fff9f8] ring-1 ring-[#c97a6d]' : ''
+      }`}
+    >
+      <input type="file" className="hidden" ref={inputRef} onChange={(e) => {
+        // e.target.files
+      }} />
+      {children}
     </div>
   );
 }

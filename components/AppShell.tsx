@@ -18,6 +18,17 @@ import {
   X,
 } from 'lucide-react';
 
+function CollapseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 6h16" />
+      <path d="M4 12h10" />
+      <path d="M4 18h16" />
+      <path d="M19 9l-3 3 3 3" />
+    </svg>
+  );
+}
+
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/my-campaigns', label: 'My Campaigns', icon: Megaphone },
@@ -39,32 +50,39 @@ export default function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <main className="h-screen overflow-hidden bg-[#fcfaf8] text-[#463431]">
       <div className="flex h-screen w-full bg-[#fffdfa]">
-        <aside className="hidden h-screen w-[250px] shrink-0 flex-col border-r border-[#f0e7e3] bg-[#fffdfa] xl:flex">
-          <div className="flex h-[72px] items-center gap-3 border-b border-[#f0e7e3] px-5">
-            <button type="button" className="text-[#7d6a64]">
-              <Menu size={18} />
+        <aside className={`hidden h-screen shrink-0 flex-col border-r border-[#f0e7e3] bg-[#fffdfa] transition-all duration-300 xl:flex ${isCollapsed ? 'w-[80px]' : 'w-[250px]'}`}>
+          <div className={`flex h-[72px] items-center overflow-hidden border-b border-[#f0e7e3] ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-5'}`}>
+            <button type="button" onClick={() => setIsCollapsed(!isCollapsed)} className="shrink-0 text-[#7d6a64] transition-colors hover:text-[#b25649]">
+              {isCollapsed ? <Menu size={18} /> : <CollapseIcon />}
             </button>
-            <Image src="/images/logo_h.png" alt="HOPECARD" width={24} height={24} className="h-6 w-6 object-contain" />
-            <span className="text-[20px] font-extrabold tracking-[-0.03em] text-[#b25649]">HOPECARD</span>
+            {!isCollapsed && (
+              <div className="flex min-w-[150px] shrink-0 items-center gap-3">
+                <Image src="/images/logo_h.png" alt="HOPECARD" width={24} height={24} className="h-6 w-6 object-contain" />
+                <span className="text-[20px] font-extrabold tracking-[-0.03em] text-[#b25649]">HOPECARD</span>
+              </div>
+            )}
           </div>
 
-          <div className="border-b border-[#f0e7e3] px-5 py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#20313f] text-white">
+          <div className={`border-b border-[#f0e7e3] overflow-hidden py-4 ${isCollapsed ? 'flex justify-center px-0' : 'px-5'}`}>
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#20313f] text-white">
                 <Users size={18} />
               </div>
-              <div>
-                <p className="text-[14px] font-bold text-[#473531]">Sarah Jenkins</p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#d27766]">Campaign Manager</p>
-              </div>
+              {!isCollapsed && (
+                <div className="min-w-[150px] shrink-0">
+                  <p className="text-[14px] font-bold text-[#473531]">Sarah Jenkins</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#d27766]">Campaign Manager</p>
+                </div>
+              )}
             </div>
           </div>
 
-          <nav className="flex-1 px-4 py-5">
+          <nav className={`flex-1 overflow-x-hidden py-5 ${isCollapsed ? 'px-2' : 'px-4'}`}>
             <ul className="space-y-2">
               {navItems.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href;
@@ -73,12 +91,15 @@ export default function AppShell({
                   <li key={href}>
                     <Link
                       href={href}
-                      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-[14px] font-medium transition ${
+                      className={`flex items-center overflow-hidden rounded-xl py-3 text-left text-[14px] font-medium transition ${
+                        isCollapsed ? 'justify-center w-12 h-12 px-0 mx-auto' : 'w-full gap-3 px-4'
+                      } ${
                         active ? 'bg-[#fff1ed] text-[#cc6d58]' : 'text-[#746560] hover:bg-[#faf3f0]'
                       }`}
+                      title={isCollapsed ? label : undefined}
                     >
-                      <Icon size={16} className={active ? 'text-[#cc6d58]' : 'text-[#8a7a76]'} />
-                      <span>{label}</span>
+                      <Icon size={16} className={`shrink-0 ${active ? 'text-[#cc6d58]' : 'text-[#8a7a76]'}`} />
+                      {!isCollapsed && <span className="min-w-[120px] shrink-0">{label}</span>}
                     </Link>
                   </li>
                 );
@@ -86,14 +107,17 @@ export default function AppShell({
             </ul>
           </nav>
 
-          <div className="px-4 pb-5">
+          <div className={`pb-5 overflow-hidden ${isCollapsed ? 'px-2' : 'px-4'}`}>
             <button
               type="button"
               onClick={() => setShowLogoutModal(true)}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[14px] font-medium text-[#746560] hover:bg-[#faf3f0]"
+              className={`flex items-center overflow-hidden rounded-xl py-3 text-[14px] font-medium text-[#746560] hover:bg-[#faf3f0] ${
+                isCollapsed ? 'justify-center w-12 h-12 px-0 mx-auto' : 'w-full gap-3 px-4'
+              }`}
+              title={isCollapsed ? 'Logout' : undefined}
             >
-              <LogOut size={16} className="text-[#8a7a76]" />
-              <span>Logout</span>
+              <LogOut size={16} className="shrink-0 text-[#8a7a76]" />
+              {!isCollapsed && <span className="min-w-[120px] shrink-0 text-left">Logout</span>}
             </button>
           </div>
         </aside>
