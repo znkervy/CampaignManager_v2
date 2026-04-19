@@ -44,8 +44,9 @@ function validateCampaignData(data: {
     errors.push({ field: 'title', message: 'Campaign title is required' });
   }
 
-  if (!data.category || data.category.trim().length === 0) {
-    errors.push({ field: 'category', message: 'Category is required' });
+  const validCategories = ['Health', 'Education', 'Environment', 'Disaster'];
+  if (!data.category || !validCategories.includes(data.category)) {
+    errors.push({ field: 'category', message: 'Please select a valid category' });
   }
 
   if (!data.description || data.description.trim().length === 0) {
