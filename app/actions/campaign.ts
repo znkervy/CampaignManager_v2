@@ -4,6 +4,16 @@ import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import nodemailer from 'nodemailer';
 
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
+
 export type ActionResponse = {
   success: boolean;
   error?: string;
@@ -101,6 +111,7 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
 
       if (joinError) {
         console.error('Beneficiary link error:', joinError);
+        return { success: false, error: 'Campaign created but failed to link beneficiaries. Please try again.' };
       }
 
       // Send invitation emails
@@ -108,16 +119,6 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
         .from('beneficiary_profiles')
         .select('email, first_name, last_name')
         .in('id', selectedBeneficiaryIds);
-
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '465'),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
-        },
-      });
 
       for (const b of beneficiaries || []) {
         if (!b.email) continue;
