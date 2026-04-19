@@ -18,6 +18,7 @@ export type ActionResponse = {
   success: boolean;
   error?: string;
   data?: any;
+  validationErrors?: Array<{ field: string; message: string }>;
 };
 
 interface CampaignValidationError {
@@ -157,7 +158,7 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
     });
 
     if (validationErrors.length > 0) {
-      return { success: false, error: validationErrors[0].message };
+      return { success: false, error: 'Campaign validation failed', validationErrors };
     }
 
     let cover_image_key = null;
