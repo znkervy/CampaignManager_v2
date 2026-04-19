@@ -3,15 +3,16 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MoreVertical, Plus, Search, TrendingUp, Users } from 'lucide-react';
+import { CheckCircle2, MoreVertical, Plus, Search, TrendingUp, Users, XCircle } from 'lucide-react';
 import AppShell from '../../components/AppShell';
+import { activateCampaignAction, completeCampaignAction, cancelCampaignAction } from '@/app/actions/campaign';
 import type { MyCampaignRow } from '@/app/actions/reports';
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   active: { label: 'ACTIVE', className: 'bg-[#ddf7e8] text-[#3caa71]' },
-  draft: { label: 'PENDING', className: 'bg-[#ffe7d7] text-[#e38f4d]' },
-  completed: { label: 'CLOSED', className: 'bg-[#f1efee] text-[#9e9692]' },
-  cancelled: { label: 'CLOSED', className: 'bg-[#f1efee] text-[#9e9692]' },
+  draft: { label: 'DRAFT', className: 'bg-[#ffe7d7] text-[#e38f4d]' },
+  completed: { label: 'COMPLETED', className: 'bg-[#ddf7e8] text-[#3caa71]' },
+  cancelled: { label: 'CANCELLED', className: 'bg-[#fde8e5] text-[#c86a5d]' },
 };
 
 function formatCurrency(amount: number): string {
@@ -72,12 +73,13 @@ export default function MyCampaignsUI({
   const filterTabs = [
     { label: 'All Campaigns', value: 'all' },
     { label: 'Active', value: 'active' },
-    { label: 'Pending', value: 'draft' },
-    { label: 'Closed', value: 'completed' },
+    { label: 'Draft', value: 'draft' },
+    { label: 'Completed', value: 'completed' },
+    { label: 'Cancelled', value: 'cancelled' },
   ];
 
   return (
-    <AppShell searchPlaceholder="Search campaigns...">
+    <AppShell userName={managerName} userRole="Campaign Manager" searchPlaceholder="Search campaigns...">
       <div className="space-y-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -177,9 +179,59 @@ export default function MyCampaignsUI({
                           </span>
                         </td>
                         <td className="px-4 py-5">
-                          <button type="button" className="text-[#9d8f8a]">
-                            <MoreVertical size={16} />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {(campaign.status === 'draft' || campaign.status === 'Draft') && (
+                              <button
+                                title="Activate Campaign"
+                                type="button"
+                                onClick={async () => {
+                                  if (confirm('Are you sure you want to activate this campaign?')) {
+                                    const res = await activateCampaignAction(campaign.id.toString());
+                                    if (res.success) router.refresh();
+                                    else alert(res.error || 'Failed to activate');
+                                  }
+                                }}
+                                className="rounded-lg bg-[#b55247] px-2 py-1 text-[11px] font-bold text-white hover:bg-[#a0483e]"
+                              >
+                                Activate
+                              </button>
+                            )}
+                            {(campaign.status === 'active' || campaign.status === 'Active') && (
+                              <>
+                                <button
+                                  title="Complete Campaign"
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm('Mark this campaign as completed?')) {
+                                      const res = await completeCampaignAction(campaign.id.toString());
+                                      if (res.success) router.refresh();
+                                      else alert(res.error || 'Failed to complete');
+                                    }
+                                  }}
+                                  className="rounded-lg bg-[#3caa71] p-1.5 text-white hover:bg-[#328e5e]"
+                                >
+                                  <CheckCircle2 size={14} />
+                                </button>
+                                <button
+                                  title="Cancel Campaign"
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm('Are you sure you want to cancel this campaign?')) {
+                                      const res = await cancelCampaignAction(campaign.id.toString());
+                                      if (res.success) router.refresh();
+                                      else alert(res.error || 'Failed to cancel');
+                                    }
+                                  }}
+                                  className="rounded-lg bg-[#c86a5d] p-1.5 text-white hover:bg-[#a6564a]"
+                                >
+                                  <XCircle size={14} />
+                                </button>
+                              </>
+                            )}
+                            <button type="button" className="text-[#9d8f8a]">
+                              <MoreVertical size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

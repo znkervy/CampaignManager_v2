@@ -28,11 +28,22 @@ export default async function DashboardPage() {
 
   const { metrics, campaigns, liveActivity } = await getDashboardData(user.id);
 
+  // Re-fetch profile for full name (DashboardData only gives metrics)
+  const { data: fullProfile } = await adminClient
+    .from('campaign_manager_profiles')
+    .select('first_name, last_name, organization_name')
+    .eq('auth_user_id', user.id)
+    .single();
+
+  const userName = fullProfile ? `${fullProfile.first_name} ${fullProfile.last_name}` : 'Manager';
+
   return (
     <DashboardUI
       metrics={metrics}
       campaigns={campaigns}
       liveActivity={liveActivity}
+      userName={userName}
+      userRole="Campaign Manager"
     />
   );
 }

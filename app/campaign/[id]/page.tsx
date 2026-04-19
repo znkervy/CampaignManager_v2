@@ -12,7 +12,7 @@ interface Campaign {
   goal: number;
   donors: number;
   endDate: string;
-  status: 'Active' | 'Pending' | 'Completed';
+  status: 'Active' | 'Draft' | 'Completed' | 'Cancelled';
   description?: string;
 }
 
@@ -61,8 +61,9 @@ export default function CampaignDetails() {
 
   const statusStyles = {
     Active: 'bg-emerald-500 text-white',
-    Pending: 'bg-yellow-400 text-[#1B1C1B]',
-    Completed: 'bg-gray-400 text-white',
+    Draft: 'bg-yellow-400 text-[#1B1C1B]',
+    Completed: 'bg-emerald-500 text-white',
+    Cancelled: 'bg-red-500 text-white',
   };
 
   return (

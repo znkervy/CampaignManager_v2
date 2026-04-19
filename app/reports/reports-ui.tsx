@@ -34,7 +34,8 @@ function formatDate(dateStr: string): string {
 
 const STATUS_CLASS: Record<string, string> = {
   paid: 'bg-[#fff6db] text-[#b9922e]',
-  pending: 'bg-[#fde8e5] text-[#c86a5d]',
+  pending: 'bg-[#fde8e5] text-[#c86a5d]', // Keeping the key as pending for logic but user sees DRAFT if mapped
+  draft: 'bg-[#fde8e5] text-[#c86a5d]',
   failed: 'bg-[#f1efee] text-[#9e9692]',
   refunded: 'bg-[#f1efee] text-[#9e9692]',
 };
@@ -48,6 +49,7 @@ export default function ReportsUI({
   transactions,
   totalTransactions,
   currentPage,
+  managerName,
 }: {
   statCards: ReportStatCards;
   weeklyTrends: WeeklyTrend[];
@@ -55,6 +57,7 @@ export default function ReportsUI({
   transactions: TransactionRow[];
   totalTransactions: number;
   currentPage: number;
+  managerName?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -150,7 +153,7 @@ export default function ReportsUI({
       : 'conic-gradient(#f3ebe7 0% 100%)';
 
   return (
-    <AppShell searchPlaceholder="Search reports...">
+    <AppShell userName={managerName} userRole="Campaign Manager" searchPlaceholder="Search reports...">
       <div className="w-full space-y-6 pb-28">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -346,7 +349,7 @@ export default function ReportsUI({
                       </td>
                       <td className="px-4 py-5">
                         <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-extrabold ${STATUS_CLASS[t.status.toLowerCase()] ?? STATUS_CLASS.pending}`}>
-                          {t.status.toUpperCase()}
+                          {t.status.toLowerCase() === 'pending' ? 'DRAFT' : t.status.toUpperCase()}
                         </span>
                       </td>
                       <td className="px-4 py-5">

@@ -174,3 +174,52 @@ export async function loginAction(formData: FormData): Promise<AuthActionResult>
 
   redirect('/dashboard');
 }
+
+export async function getProfileAction() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const adminClient = createAdminClient();
+  const { data: profile, error } = await adminClient
+    .from('campaign_manager_profiles')
+    .select('*')
+    .eq('auth_user_id', user.id)
+    .single();
+
+  if (error || !profile) return null;
+
+  return profile;
+}
+
+export async function updateProfileAction(formData: FormData): Promise<AuthActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Unauthorized' };
+
+  const firstName = formData.get('firstName') as string;
+  const lastName = formData.get('lastName') as string;
+  const organizationName = formData.get('organizationName') as string;
+  const phone = formData.get('phone') as string;
+
+  if (!firstName || !lastName || !organizationName || !phone) {
+    return { error: 'First name, last name, organization, and phone are required.' };
+  }
+
+  const adminClient = createAdminClient();
+  const { error: profileError } = await adminClient
+    .from('campaign_manager_profiles')
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      organization_name: organizationName,
+      phone: phone,
+    })
+    .eq('auth_user_id', user.id);
+
+  if (profileError) {
+    return { error: profileError.message };
+  }
+
+  return null;
+}

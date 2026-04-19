@@ -48,11 +48,13 @@ export default function DonorsUI({
   donors,
   totalCount,
   currentPage,
+  managerName,
 }: {
   statCards: DonorStatCards;
   donors: DonorRow[];
   totalCount: number;
   currentPage: number;
+  managerName?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -97,7 +99,7 @@ export default function DonorsUI({
   ];
 
   return (
-    <AppShell searchPlaceholder="Search donors...">
+    <AppShell userName={managerName} userRole="Campaign Manager" searchPlaceholder="Search donors...">
       <div className="w-full space-y-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>

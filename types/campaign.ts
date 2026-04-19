@@ -1,4 +1,4 @@
-export type CampaignStatus = 'Active' | 'Pending' | 'Completed';
+export type CampaignStatus = 'Active' | 'Draft' | 'Completed' | 'Cancelled';
 
 export interface Campaign {
   id: number;

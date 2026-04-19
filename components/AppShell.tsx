@@ -41,11 +41,15 @@ const navItems = [
 interface AppShellProps {
   children: ReactNode;
   searchPlaceholder?: string;
+  userName?: string;
+  userRole?: string;
 }
 
 export default function AppShell({
   children,
   searchPlaceholder = 'Search campaigns...',
+  userName = 'Campaign Manager',
+  userRole = 'Manager',
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -75,8 +79,8 @@ export default function AppShell({
               </div>
               {!isCollapsed && (
                 <div className="min-w-[150px] shrink-0">
-                  <p className="text-[14px] font-bold text-[#473531]">Sarah Jenkins</p>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#d27766]">Campaign Manager</p>
+                  <p className="text-[14px] font-bold text-[#473531]">{userName}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#d27766]">{userRole}</p>
                 </div>
               )}
             </div>

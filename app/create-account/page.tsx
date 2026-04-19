@@ -86,7 +86,7 @@ export default function CreateAccountPage() {
       <AuthShell
         title="Check Your Email"
         description="We've sent a confirmation link to your email address."
-        footerRightLabel="Pending"
+        footerRightLabel="Draft"
       >
         <p className="text-center text-[13px] font-medium text-[#8f817d]">
           Click the link in your email to confirm your account. Once confirmed,

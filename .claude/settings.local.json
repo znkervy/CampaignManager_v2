@@ -9,7 +9,20 @@
       "Bash(npx tsc *)",
       "Bash(node *)",
       "Bash(grep -E \"^page\\\\.tsx$|page.tsx\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__execute_sql",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(xargs grep *)",
+      "mcp__ide__getDiagnostics",
+      "Bash(echo \"Dev server started. PID: $!\")",
+      "Bash(npm exec *)",
+      "Bash(curl -s http://localhost:3000/create-campaign)",
+      "Bash(curl -s -L http://localhost:3000/create-campaign)"
     ]
   }
 }

@@ -170,11 +170,11 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
 
       const { data: uploadData, error: uploadError } = await adminSupabase.storage
         .from('camp-man-files')
-        .upload(filePath, coverImage);
+        .upload(`cover-images/${filePath}`, coverImage);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        return { success: false, error: 'Failed to upload cover image. Ensure the camp-man-files bucket exists.' };
+        return { success: false, error: 'Failed to upload cover image. Ensure the camp-man-files bucket and cover-images folder exist.' };
       }
       cover_image_key = uploadData.path;
     }
@@ -246,6 +246,66 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
     return { success: true };
   } catch (error: any) {
     console.error('Error creating campaign:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function activateCampaignAction(campaignId: string): Promise<ActionResponse> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { error } = await adminSupabase
+      .from('hc_campaigns')
+      .update({ status: 'active' })
+      .eq('id', campaignId);
+
+    if (error) {
+      console.error('Activation error:', error);
+      return { success: false, error: 'Failed to activate campaign.' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error activating campaign:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function completeCampaignAction(campaignId: string): Promise<ActionResponse> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { error } = await adminSupabase
+      .from('hc_campaigns')
+      .update({ status: 'completed' })
+      .eq('id', campaignId);
+
+    if (error) {
+      console.error('Completion error:', error);
+      return { success: false, error: 'Failed to complete campaign.' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error completing campaign:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function cancelCampaignAction(campaignId: string): Promise<ActionResponse> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { error } = await adminSupabase
+      .from('hc_campaigns')
+      .update({ status: 'cancelled' })
+      .eq('id', campaignId);
+
+    if (error) {
+      console.error('Cancellation error:', error);
+      return { success: false, error: 'Failed to cancel campaign.' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error cancelling campaign:', error);
     return { success: false, error: error.message };
   }
 }

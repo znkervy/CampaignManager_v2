@@ -21,9 +21,9 @@ import type {
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   active: { label: 'ACTIVE', className: 'bg-[#ddf7e8] text-[#3caa71]' },
-  draft: { label: 'PENDING', className: 'bg-[#ffe7d7] text-[#e38f4d]' },
-  completed: { label: 'CLOSED', className: 'bg-[#f1efee] text-[#9e9692]' },
-  cancelled: { label: 'CLOSED', className: 'bg-[#f1efee] text-[#9e9692]' },
+  draft: { label: 'DRAFT', className: 'bg-[#ffe7d7] text-[#e38f4d]' },
+  completed: { label: 'COMPLETED', className: 'bg-[#ddf7e8] text-[#3caa71]' },
+  cancelled: { label: 'CANCELLED', className: 'bg-[#fde8e5] text-[#c86a5d]' },
 };
 
 const quickActions = [
@@ -56,10 +56,14 @@ export default function DashboardUI({
   metrics,
   campaigns,
   liveActivity,
+  userName,
+  userRole,
 }: {
   metrics: DashboardMetrics;
   campaigns: DashboardCampaign[];
   liveActivity: LiveActivityItem[];
+  userName?: string;
+  userRole?: string;
 }) {
   const metricCards = [
     {
@@ -95,13 +99,13 @@ export default function DashboardUI({
       iconColor: 'text-[#ca655d]',
       badge: metrics.pendingActions > 0 ? 'Action Required' : 'All Clear',
       badgeColor: metrics.pendingActions > 0 ? 'text-[#d14f45]' : 'text-[#3caa71]',
-      title: 'Pending Actions',
+      title: 'Draft Actions',
       value: metrics.pendingActions.toString(),
     },
   ];
 
   return (
-    <AppShell>
+    <AppShell userName={userName} userRole={userRole}>
       <div className="mx-auto max-w-[1120px]">
         <div>
           <h1 className="text-[24px] font-extrabold tracking-[-0.03em] text-[#2e2523] sm:text-[28px]">

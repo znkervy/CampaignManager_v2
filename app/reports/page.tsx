@@ -18,16 +18,18 @@ export default async function ReportsPage({
   }
 
   const adminSupabase = createAdminClient();
-  const { data: profile } = await adminSupabase
+  const { data: managerProfile } = await adminSupabase
     .from('campaign_manager_profiles')
-    .select('status')
+    .select('first_name, last_name, status')
     .eq('auth_user_id', user.id)
     .single();
 
-  if (!profile || profile.status !== 'approved') {
+  if (!managerProfile || managerProfile.status !== 'approved') {
     redirect('/');
     return null;
   }
+
+  const managerName = `${managerProfile.first_name} ${managerProfile.last_name}`;
 
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page ?? '1', 10));
@@ -43,6 +45,7 @@ export default async function ReportsPage({
       transactions={transactions}
       totalTransactions={totalTransactions}
       currentPage={currentPage}
+      managerName={managerName}
     />
   );
 }
