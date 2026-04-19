@@ -115,6 +115,9 @@ export default function ReportsUI({
   const padY = 20;
 
   function toPoint(index: number, value: number): [number, number] {
+    if (weeklyTrends.length <= 1) {
+      return [padX + (chartW - padX * 2) / 2, chartH - padY];
+    }
     const x = padX + (index / (weeklyTrends.length - 1)) * (chartW - padX * 2);
     const y = chartH - padY - (value / maxVal) * (chartH - padY * 2);
     return [x, y];
@@ -342,7 +345,7 @@ export default function ReportsUI({
                         </span>
                       </td>
                       <td className="px-4 py-5">
-                        <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-extrabold ${STATUS_CLASS[t.status] ?? STATUS_CLASS.pending}`}>
+                        <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-extrabold ${STATUS_CLASS[t.status.toLowerCase()] ?? STATUS_CLASS.pending}`}>
                           {t.status.toUpperCase()}
                         </span>
                       </td>
