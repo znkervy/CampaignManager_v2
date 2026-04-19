@@ -383,10 +383,13 @@ export async function getDonorsData(
       );
 
       const campaignIdSet = new Set(Object.values(hcardCampaignMap));
-      const { data: campaignRows } = await adminSupabase
-        .from('hc_campaigns')
-        .select('id, title, category')
-        .in('id', [...campaignIdSet]);
+      const campaignIds2 = [...campaignIdSet];
+      const { data: campaignRows } = campaignIds2.length > 0
+        ? await adminSupabase
+            .from('hc_campaigns')
+            .select('id, title, category')
+            .in('id', campaignIds2)
+        : { data: [] };
 
       const campaignMap = Object.fromEntries((campaignRows ?? []).map((c) => [c.id, c.title]));
 
