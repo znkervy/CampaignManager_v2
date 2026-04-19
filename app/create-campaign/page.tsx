@@ -623,21 +623,15 @@ export default function CreateCampaignPage() {
                   <div className="grid grid-cols-2 gap-8">
                     <div className="col-span-2">
                       <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Campaign Title</label>
-                      <p className="mt-2 text-[15px] font-bold text-[#382b28]">Clean Water Initiative: Central Valley Community</p>
+                      <p className="mt-2 text-[15px] font-bold text-[#382b28]">{title || '—'}</p>
                     </div>
-                    <div className="col-span-2 grid grid-cols-2 gap-8">
-                      <div>
-                        <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category</label>
-                        <p className="mt-2 text-[14px] font-medium text-[#4a3936]">Environmental / Community</p>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Location</label>
-                        <p className="mt-2 text-[14px] font-medium text-[#4a3936]">Bakersfield, CA</p>
-                      </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category</label>
+                      <p className="mt-2 text-[14px] font-medium text-[#4a3936]">{activeCategory || '—'}</p>
                     </div>
                     <div className="col-span-2">
                       <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Story Summary</label>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[#6d5d59]">Our goal is to provide sustainable filtration systems to over 500 households in the Central Valley region who currently lack access to clean drinking water. This initiative covers the installation and 2 years of maintenance...</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[#6d5d59] line-clamp-3">{description || '—'}</p>
                     </div>
                   </div>
                 </div>
@@ -654,13 +648,23 @@ export default function CreateCampaignPage() {
                 <div className="mt-6 grid grid-cols-2 gap-6">
                   <div className="rounded-[20px] bg-[#f7f4f3] p-5">
                     <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Target Amount</label>
-                    <p className="mt-2 text-[22px] font-bold text-[#382b28]">$25,000.00</p>
+                    <p className="mt-2 text-[22px] font-bold text-[#382b28]">
+                      {targetAmount ? `$${parseFloat(targetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                    </p>
                     <p className="mt-1 text-[11px] text-[#9a8d88]">USD - US Dollars</p>
                   </div>
                   <div className="rounded-[20px] bg-[#f7f4f3] p-5">
                     <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Deadline</label>
-                    <p className="mt-2 text-[22px] font-bold text-[#382b28]">Nov 15</p>
-                    <p className="mt-1 text-[11px] text-[#9a8d88]">2024 (45 Days Remaining)</p>
+                    <p className="mt-2 text-[22px] font-bold text-[#382b28]">
+                      {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[#9a8d88]">
+                      {endDate ? (() => {
+                        const endDateTime = new Date(endDate + 'T00:00:00').getTime();
+                        const daysRemaining = Math.max(0, Math.ceil((endDateTime - new Date().getTime()) / 86400000));
+                        return `${new Date(endDate + 'T00:00:00').getFullYear()} (${daysRemaining} Days Remaining)`;
+                      })() : '—'}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -674,31 +678,26 @@ export default function CreateCampaignPage() {
                   </button>
                 </div>
                 <div className="mt-6 space-y-3">
-                  <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fce5c8] text-[#d98b2c]">
-                        <Building2 size={18} />
-                      </div>
-                      <div>
-                        <h3 className="text-[14px] font-bold text-[#382b28]">Valley Hope Non-Profit Org</h3>
-                        <p className="text-[11px] text-[#8e7f7a]">Tax ID: 12-3456789</p>
-                      </div>
-                    </div>
-                    <span className="rounded-full bg-[#e8f5ec] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.05em] text-[#2ba05b]">Verified</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#8e7f7a] shadow-sm">
-                        <Banknote size={18} />
-                      </div>
-                      <p className="text-[14px] font-bold text-[#382b28]">Chase Bank •••• 9921</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[#2ba05b]">
-                      <CheckCircle2 size={14} />
-                      <span className="text-[10px] font-extrabold uppercase tracking-[0.05em]">Bank Connected</span>
-                    </div>
-                  </div>
+                  {selectedBeneficiaries.length === 0 ? (
+                    <p className="text-[14px] text-[#84716b] py-4">No beneficiaries selected.</p>
+                  ) : (
+                    beneficiaries
+                      .filter(b => selectedBeneficiaries.includes(b.id))
+                      .map(b => (
+                        <div key={b.id} className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fce5c8] text-[#d98b2c] font-bold text-[12px]">
+                              {b.first_name?.[0]}{b.last_name?.[0]}
+                            </div>
+                            <div>
+                              <h3 className="text-[14px] font-bold text-[#382b28]">{b.first_name} {b.last_name}</h3>
+                              <p className="text-[11px] text-[#8e7f7a]">{b.email || 'No email'}</p>
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-[#e8f5ec] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.05em] text-[#2ba05b]">Approved</span>
+                        </div>
+                      ))
+                  )}
                 </div>
               </section>
 
@@ -714,22 +713,40 @@ export default function CreateCampaignPage() {
                   <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
                     <div className="flex items-center gap-3">
                       <FileText size={16} className="text-[#b55247]" />
-                      <span className="text-[13px] font-bold text-[#382b28]">National Identity Document</span>
+                      <span className="text-[13px] font-bold text-[#382b28]">Manager ID</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Check size={14} className="text-[#2ba05b]" />
-                      <span className="text-[11px] font-medium text-[#6d5d59]">ID_FRONT_SARAH.JPG</span>
+                      {managerId ? (
+                        <>
+                          <Check size={14} className="text-[#2ba05b]" />
+                          <span className="text-[11px] font-medium text-[#6d5d59]">{managerId.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldAlert size={14} className="text-[#c96a5b]" />
+                          <span className="text-[11px] font-medium text-[#c96a5b]">No file uploaded</span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between rounded-[20px] bg-[#f7f4f3] p-5">
                     <div className="flex items-center gap-3">
                       <ShieldCheck size={16} className="text-[#b55247]" />
-                      <span className="text-[13px] font-bold text-[#382b28]">Non-Profit Certification (501c3)</span>
+                      <span className="text-[13px] font-bold text-[#382b28]">Proof of Address</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Check size={14} className="text-[#2ba05b]" />
-                      <span className="text-[11px] font-medium text-[#6d5d59]">IRS_LETTER_VH.PDF</span>
+                      {proofOfAddress ? (
+                        <>
+                          <Check size={14} className="text-[#2ba05b]" />
+                          <span className="text-[11px] font-medium text-[#6d5d59]">{proofOfAddress.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldAlert size={14} className="text-[#c96a5b]" />
+                          <span className="text-[11px] font-medium text-[#c96a5b]">No file uploaded</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -768,7 +785,7 @@ export default function CreateCampaignPage() {
 
               <h2 className="mt-8 text-[22px] font-extrabold text-[#382b28] sm:text-[24px]">Campaign Submitted for Review!</h2>
               <p className="mx-auto mt-4 max-w-[620px] text-[14px] leading-7 text-[#7f6f6a]">
-                Great job, Sarah! Your campaign <span className="font-semibold text-[#e07d71]">&quot;Clean Water Initiative&quot;</span> has
+                Great job! Your campaign <span className="font-semibold text-[#e07d71]">&quot;{title}&quot;</span> has
                 been sent to our administration team for verification. We&apos;ll review the details and beneficiary information to ensure
                 everything is ready for the marketplace.
               </p>
