@@ -1,0 +1,278 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { MoreVertical, Plus, Search, TrendingUp, Users } from 'lucide-react';
+import AppShell from '../../components/AppShell';
+import type { MyCampaignRow } from '@/app/actions/reports';
+
+const STATUS_LABEL: Record<string, { label: string; className: string }> = {
+  active: { label: 'ACTIVE', className: 'bg-[#ddf7e8] text-[#3caa71]' },
+  draft: { label: 'PENDING', className: 'bg-[#ffe7d7] text-[#e38f4d]' },
+  completed: { label: 'CLOSED', className: 'bg-[#f1efee] text-[#9e9692]' },
+  cancelled: { label: 'CLOSED', className: 'bg-[#f1efee] text-[#9e9692]' },
+};
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+export default function MyCampaignsUI({
+  campaigns,
+  totalCount,
+  currentPage,
+  managerName,
+}: {
+  campaigns: MyCampaignRow[];
+  totalCount: number;
+  currentPage: number;
+  managerName: string;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '');
+  const activeFilter = searchParams.get('status') ?? 'all';
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
+
+  function navigate(params: Record<string, string>) {
+    const next = new URLSearchParams(searchParams.toString());
+    for (const [k, v] of Object.entries(params)) {
+      if (v) next.set(k, v);
+      else next.delete(k);
+    }
+    startTransition(() => router.push(`/my-campaigns?${next.toString()}`));
+  }
+
+  function handleFilterChange(filter: string) {
+    navigate({ status: filter === 'all' ? '' : filter, page: '1' });
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    navigate({ search: searchInput, page: '1' });
+  }
+
+  function handlePage(p: number) {
+    navigate({ page: p.toString() });
+  }
+
+  const filterTabs = [
+    { label: 'All Campaigns', value: 'all' },
+    { label: 'Active', value: 'active' },
+    { label: 'Pending', value: 'draft' },
+    { label: 'Closed', value: 'completed' },
+  ];
+
+  return (
+    <AppShell searchPlaceholder="Search campaigns...">
+      <div className="space-y-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[#2e2523]">Campaign Management</h1>
+            <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#84716b]">
+              Track, manage, and scale your active social impact initiatives from one centralized editorial dashboard.
+            </p>
+          </div>
+          <Link
+            href="/create-campaign"
+            className="flex h-[52px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-7 text-[15px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] transition-colors"
+          >
+            <Plus size={18} />
+            Launch New Campaign
+          </Link>
+        </div>
+
+        <section className="rounded-[28px] bg-white p-4 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
+          <div className="flex flex-col gap-4 px-2 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2 text-[12px] font-bold">
+              {filterTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => handleFilterChange(tab.value)}
+                  className={`rounded-xl px-4 py-2 transition-colors ${
+                    activeFilter === tab.value
+                      ? 'bg-[#fff1ed] text-[#cc6d58]'
+                      : 'text-[#8a7b76] hover:bg-[#f7f4f3]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSearch} className="flex h-11 w-full items-center gap-2 rounded-full bg-[#faf7f5] px-4 sm:max-w-[320px]">
+              <Search size={15} className="text-[#b5a8a4]" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search campaign name..."
+                className="w-full bg-transparent text-[13px] text-[#7b6c68] outline-none placeholder:text-[#b8aca8]"
+              />
+            </form>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-[#f4ebea] text-left text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#9b8d88]">
+                  <th className="px-4 py-4">Campaign Manager</th>
+                  <th className="px-4 py-4">Campaign Name</th>
+                  <th className="px-4 py-4">Beneficiary</th>
+                  <th className="px-4 py-4">Amount Allocated</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-10 text-center text-[14px] text-[#84716b]">
+                      No campaigns found.
+                    </td>
+                  </tr>
+                ) : (
+                  campaigns.map((campaign) => {
+                    const statusInfo = STATUS_LABEL[campaign.status] ?? STATUS_LABEL.draft;
+                    const initials = getInitials(managerName);
+                    return (
+                      <tr key={campaign.id} className="border-b border-[#f4ebea]">
+                        <td className="px-4 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#102f4c] text-[10px] font-extrabold text-white">
+                              {initials}
+                            </div>
+                            <span className="text-[14px] font-semibold text-[#4a3936]">{managerName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="h-[34px] w-[34px] rounded-lg bg-[#f7f4f3] flex items-center justify-center text-[10px] font-bold text-[#8a7a75]">
+                              {campaign.title.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                            </div>
+                            <span className="max-w-[170px] text-[14px] font-bold leading-[1.3] text-[#3b2f2c]">
+                              {campaign.title}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-5 text-[14px] font-medium text-[#766762]">{campaign.beneficiaryName || '—'}</td>
+                        <td className="px-4 py-5 text-[14px] font-bold text-[#453633]">{formatCurrency(campaign.targetAmount)}</td>
+                        <td className="px-4 py-5">
+                          <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-extrabold ${statusInfo.className}`}>
+                            {statusInfo.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-5">
+                          <button type="button" className="text-[#9d8f8a]">
+                            <MoreVertical size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex flex-col gap-4 px-4 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[13px] text-[#80716c]">
+              Showing {totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} campaigns
+            </p>
+            <div className="flex items-center gap-2 text-[12px] font-bold">
+              <button
+                type="button"
+                onClick={() => handlePage(currentPage - 1)}
+                disabled={currentPage === 1 || isPending}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#efdfdb] text-[#8c7d78] disabled:opacity-50 hover:bg-[#f7f4f3] transition-colors"
+              >
+                ‹
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) })
+                .map((_, i) => {
+                  let startPage = Math.max(1, currentPage - 2);
+                  const endPage = Math.min(totalPages, startPage + 4);
+                  if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+                  return startPage + i;
+                })
+                .filter((p) => p <= totalPages)
+                .map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => handlePage(page)}
+                    disabled={isPending}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                      page === currentPage
+                        ? 'bg-[#b55247] text-white'
+                        : 'border border-[#efdfdb] text-[#8c7d78] hover:bg-[#f7f4f3]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              <button
+                type="button"
+                onClick={() => handlePage(currentPage + 1)}
+                disabled={currentPage === totalPages || isPending}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#efdfdb] text-[#8c7d78] disabled:opacity-50 hover:bg-[#f7f4f3] transition-colors"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          <section className="rounded-[26px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1ed] text-[#cc6d58]">
+                <TrendingUp size={16} />
+              </div>
+              <h2 className="text-[16px] font-extrabold text-[#433330]">Total Campaigns</h2>
+            </div>
+            <p className="mt-5 text-[40px] font-extrabold tracking-[-0.04em] text-[#ba5f4e]">{totalCount}</p>
+            <p className="mt-2 text-[13px] leading-6 text-[#8b7d78]">Campaigns created by you</p>
+          </section>
+
+          <section className="rounded-[26px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff6db] text-[#b9922e]">
+                <Users size={16} />
+              </div>
+              <h2 className="text-[16px] font-extrabold text-[#433330]">Active Now</h2>
+            </div>
+            <p className="mt-5 text-[40px] font-extrabold tracking-[-0.04em] text-[#b9922e]">
+              {campaigns.filter((c) => c.status === 'active').length}
+            </p>
+            <p className="mt-2 text-[13px] leading-6 text-[#8b7d78]">Currently active campaigns</p>
+          </section>
+
+          <section className="rounded-[26px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
+            <h2 className="text-[16px] font-extrabold text-[#433330]">Campaign Tip</h2>
+            <p className="mt-4 text-[14px] leading-7 text-[#8b7d78]">
+              Visual updates increase donor retention by 42%. Try adding a cover photo to your next campaign.
+            </p>
+            <Link href="/create-campaign" className="mt-5 block text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#c96a5b]">
+              Create Campaign →
+            </Link>
+          </section>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
