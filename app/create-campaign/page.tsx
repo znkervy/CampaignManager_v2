@@ -142,7 +142,7 @@ export default function CreateCampaignPage() {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [beneficiaries, setBeneficiaries] = useState<any[]>([]);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
-  
+
   // Basic Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -159,6 +159,13 @@ export default function CreateCampaignPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [agreedToCampaignAccuracy, setAgreedToCampaignAccuracy] = useState(false);
+
+  // Clear validation errors when form fields change
+  useEffect(() => {
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
+  }, [title, activeCategory, description, targetAmount, endDate, selectedBeneficiaries, managerId, proofOfAddress, agreedToTerms, agreedToPrivacy, agreedToCampaignAccuracy, validationErrors]);
 
   useEffect(() => {
     async function fetchBen() {
@@ -590,14 +597,14 @@ export default function CreateCampaignPage() {
           !isSubmitted ? (
             <>
               {validationErrors.length > 0 && (
-                <div className="rounded-[20px] bg-[#fef3f2] px-5 py-4 border border-[#f5d4d0] text-[#c96a5b] mb-6">
+                <div role="alert" aria-live="polite" className="rounded-[20px] bg-[#fef3f2] px-5 py-4 border border-[#f5d4d0] text-[#c96a5b] mb-6">
                   <div className="flex items-start gap-3">
                     <ShieldAlert size={18} className="shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[13px] mb-2">Cannot publish campaign yet. Please complete:</p>
-                      <ul className="text-[12px] space-y-1">
+                      <p id="error-summary-heading" className="font-bold text-[13px] mb-2">Cannot publish campaign yet. Please complete:</p>
+                      <ul aria-labelledby="error-summary-heading" className="text-[12px] space-y-1">
                         {validationErrors.map((error, idx) => (
-                          <li key={idx}>• {error.message}</li>
+                          <li key={`${error.field}-${idx}`}>• {error.message}</li>
                         ))}
                       </ul>
                     </div>
