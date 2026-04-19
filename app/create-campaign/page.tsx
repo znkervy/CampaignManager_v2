@@ -165,7 +165,7 @@ export default function CreateCampaignPage() {
     if (validationErrors.length > 0) {
       setValidationErrors([]);
     }
-  }, [title, activeCategory, description, targetAmount, endDate, selectedBeneficiaries, managerId, proofOfAddress, agreedToTerms, agreedToPrivacy, agreedToCampaignAccuracy, validationErrors]);
+  }, [title, activeCategory, description, targetAmount, endDate, selectedBeneficiaries, managerId, proofOfAddress, agreedToTerms, agreedToPrivacy, agreedToCampaignAccuracy]);
 
   useEffect(() => {
     async function fetchBen() {
