@@ -22,6 +22,7 @@ export type DashboardCampaign = {
 };
 
 export type LiveActivityItem = {
+  id: string;
   donorName: string;
   amount: number;
   campaignTitle: string;
@@ -173,6 +174,7 @@ export async function getDashboardData(authUserId: string): Promise<{
       );
 
       liveActivity = recent.map((p) => ({
+        id: p.id,
         donorName: donorMap[p.buyer_auth_id] ?? 'Anonymous',
         amount: Number(p.amount_paid),
         campaignTitle: campaignTitleMap[hopecardCampaignMap[p.hopecard_id]] ?? 'Unknown Campaign',

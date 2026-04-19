@@ -38,7 +38,9 @@ function formatCurrency(amount: number): string {
 }
 
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const ms = new Date(dateStr).getTime();
+  if (Number.isNaN(ms)) return 'Unknown time';
+  const diff = Date.now() - ms;
   const minutes = Math.floor(diff / 60000);
   if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
   const hours = Math.floor(minutes / 60);
@@ -184,7 +186,7 @@ export default function DashboardUI({
                             <td className="px-4 py-5 align-top">
                               <div className="flex items-center gap-3">
                                 <div className="h-[34px] w-[34px] rounded-lg bg-[#f7f4f3] flex items-center justify-center text-[10px] font-bold text-[#8a7a75]">
-                                  HC
+                                  {campaign.title.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                                 </div>
                                 <p className="max-w-[105px] text-[14px] font-bold leading-[1.15] text-[#3c302d]">
                                   {campaign.title}
@@ -255,8 +257,8 @@ export default function DashboardUI({
                 {liveActivity.length === 0 ? (
                   <p className="text-[12px] text-[#8d7d78]">No recent activity.</p>
                 ) : (
-                  liveActivity.map((item, i) => (
-                    <article key={i} className="flex gap-3">
+                  liveActivity.map((item) => (
+                    <article key={item.id} className="flex gap-3">
                       <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fff4d9]">
                         <CircleDollarSign size={15} className="text-[#bb9037]" />
                       </div>
