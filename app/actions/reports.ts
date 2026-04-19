@@ -18,6 +18,7 @@ export type DashboardCampaign = {
   targetAmount: number;
   endDate: string | null;
   coverImageKey: string | null;
+  createdAt: string;
 };
 
 export type LiveActivityItem = {
@@ -190,6 +191,7 @@ export async function getDashboardData(authUserId: string): Promise<{
       targetAmount: Number(c.target_amount ?? 0),
       endDate: c.end_date,
       coverImageKey: c.cover_image_key,
+      createdAt: c.created_at,
     })),
     liveActivity,
   };
@@ -393,8 +395,15 @@ export async function getDonorsData(
 
       const campaignMap = Object.fromEntries((campaignRows ?? []).map((c) => [c.id, c.title]));
 
+      // Pre-group purchases by buyer to avoid O(n*m) filter in loop
+      const purchasesByBuyer: Record<string, NonNullable<typeof recentPurchases>> = {};
+      for (const p of recentPurchases ?? []) {
+        if (!purchasesByBuyer[p.buyer_auth_id]) purchasesByBuyer[p.buyer_auth_id] = [];
+        purchasesByBuyer[p.buyer_auth_id].push(p);
+      }
+
       for (const buyerId of donorAuthIds) {
-        const buyerPurchases = (recentPurchases ?? []).filter((p) => p.buyer_auth_id === buyerId);
+        const buyerPurchases = purchasesByBuyer[buyerId] ?? [];
         const tags: string[] = [];
         for (const p of buyerPurchases) {
           const title = campaignMap[hcardCampaignMap[p.hopecard_id]];
@@ -535,7 +544,24 @@ export async function getReportsData(
   );
 
   const campaignTitleMap = Object.fromEntries(campaignList.map((c) => [c.id, c.title]));
-  const pageTransactions = allPurchases.slice(offset, offset + pageSize);
+
+  // Fetch paginated transactions server-side
+  let pageTransactions: any[] = [];
+  let totalTransactions = 0;
+
+  if (Object.keys(hopecardCampaignMap).length > 0) {
+    const hopecardIdsForTx = Object.keys(hopecardCampaignMap);
+    const { data: txData, count: txCount } = await adminSupabase
+      .from('hopecard_purchases')
+      .select('id, buyer_auth_id, amount_paid, purchased_at, payment_method, status, hopecard_id', { count: 'exact' })
+      .in('hopecard_id', hopecardIdsForTx)
+      .order('purchased_at', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    pageTransactions = txData ?? [];
+    totalTransactions = txCount ?? 0;
+  }
+
   const buyerIds = [...new Set(pageTransactions.map((p) => p.buyer_auth_id))];
 
   let donorNameMap: Record<string, string> = {};
@@ -575,6 +601,6 @@ export async function getReportsData(
     weeklyTrends,
     categoryBreakdown,
     transactions,
-    totalTransactions: allPurchases.length,
+    totalTransactions,
   };
 }
