@@ -139,6 +139,7 @@ export default function CreateCampaignPage() {
   const [activeCategory, setActiveCategory] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [beneficiaries, setBeneficiaries] = useState<any[]>([]);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
   
@@ -176,6 +177,26 @@ export default function CreateCampaignPage() {
   };
 
   const handleSubmit = async () => {
+    // Validate before submission
+    const errors = validateCampaignForPublication({
+      title,
+      activeCategory,
+      description,
+      targetAmount,
+      endDate,
+      selectedBeneficiaries,
+      managerId,
+      proofOfAddress,
+      agreedToTerms,
+      agreedToPrivacy,
+      agreedToCampaignAccuracy,
+    });
+
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('title', title);
@@ -229,7 +250,7 @@ export default function CreateCampaignPage() {
           ? 'Please provide the details of the person or organization who will receive the funds collected from this campaign.'
           : currentStep === 4
             ? 'To ensure trust and transparency within the HOPECARD community, we require official documentation to verify your campaign\'s legitimacy.'
-            : !isSubmitted ? 'Almost there! Please double-check the details of your campaign below. Once submitted, it will be reviewed by our team for authenticity and safety.' : '';
+            : !isSubmitted ? 'Everything looks good? Publish your campaign to activate it as a draft. You can edit and activate it later from your campaigns dashboard.' : '';
 
   const nextLabel =
     currentStep === 1
@@ -568,6 +589,21 @@ export default function CreateCampaignPage() {
         {currentStep === 5 ? (
           !isSubmitted ? (
             <>
+              {validationErrors.length > 0 && (
+                <div className="rounded-[20px] bg-[#fef3f2] px-5 py-4 border border-[#f5d4d0] text-[#c96a5b] mb-6">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-[13px] mb-2">Cannot publish campaign yet. Please complete:</p>
+                      <ul className="text-[12px] space-y-1">
+                        {validationErrors.map((error, idx) => (
+                          <li key={idx}>• {error.message}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
               <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
                 <div className="flex items-center justify-between border-b border-[#f5ece8] pb-6">
                   <h2 className="text-[18px] font-extrabold text-[#382b28]">Campaign Basics</h2>
@@ -704,10 +740,10 @@ export default function CreateCampaignPage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || validationErrors.length > 0}
                   className="flex h-[48px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-8 text-[13px] font-extrabold uppercase tracking-[0.05em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-all hover:bg-[#a0483e] disabled:opacity-75"
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit For Approval'}
+                  {isSubmitting ? 'Publishing...' : 'Publish Campaign'}
                   <ArrowRight size={15} />
                 </button>
               </div>
