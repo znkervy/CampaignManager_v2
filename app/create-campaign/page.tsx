@@ -34,10 +34,10 @@ import {
   Undo2,
   UserSquare2,
 } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import AppShell from '../../components/AppShell';
-
+import { getApprovedBeneficiaries, createCampaignAction } from '../actions/campaign';
 const steps = [
   { number: 1, label: 'Basics' },
   { number: 2, label: 'Story' },
@@ -53,10 +53,158 @@ const categories = [
   { label: 'Disaster', icon: ShieldAlert },
 ];
 
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+function validateCampaignForPublication(state: {
+  title: string;
+  activeCategory: string;
+  description: string;
+  targetAmount: string;
+  endDate: string;
+  selectedBeneficiaries: string[];
+  managerId: File | null;
+  proofOfAddress: File | null;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  agreedToCampaignAccuracy: boolean;
+}): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  // Title validation
+  if (!state.title || state.title.trim().length === 0) {
+    errors.push({ field: 'title', message: 'Campaign title is required' });
+  }
+
+  // Category validation
+  if (!state.activeCategory || state.activeCategory.trim().length === 0) {
+    errors.push({ field: 'category', message: 'Please select a category' });
+  }
+
+  // Description validation
+  if (!state.description || state.description.trim().length === 0) {
+    errors.push({ field: 'description', message: 'Campaign description is required' });
+  }
+
+  // Target amount validation
+  const targetAmount = parseFloat(state.targetAmount);
+  if (isNaN(targetAmount) || targetAmount <= 0) {
+    errors.push({ field: 'targetAmount', message: 'Target amount must be greater than 0' });
+  }
+
+  // End date validation
+  if (!state.endDate) {
+    errors.push({ field: 'endDate', message: 'Campaign end date is required' });
+  } else {
+    const endDate = new Date(state.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (endDate <= today) {
+      errors.push({ field: 'endDate', message: 'End date must be in the future' });
+    }
+  }
+
+  // Beneficiaries validation
+  if (state.selectedBeneficiaries.length === 0) {
+    errors.push({ field: 'beneficiaries', message: 'At least one beneficiary must be selected' });
+  }
+
+  // Documents validation
+  if (!state.managerId || state.managerId.size === 0) {
+    errors.push({ field: 'managerId', message: 'Manager ID document is required' });
+  }
+
+  if (!state.proofOfAddress || state.proofOfAddress.size === 0) {
+    errors.push({ field: 'proofOfAddress', message: 'Proof of Address document is required' });
+  }
+
+  // Agreements validation
+  if (!state.agreedToTerms) {
+    errors.push({ field: 'agreements', message: 'You must agree to the Terms of Service' });
+  }
+  if (!state.agreedToPrivacy) {
+    errors.push({ field: 'agreements', message: 'You must agree to the Privacy Policy' });
+  }
+  if (!state.agreedToCampaignAccuracy) {
+    errors.push({ field: 'agreements', message: 'You must certify campaign accuracy' });
+  }
+
+  return errors;
+}
+
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [activeCategory, setActiveCategory] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [beneficiaries, setBeneficiaries] = useState<any[]>([]);
+  const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
+  
+  // Basic Form State
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+
+  // Financial Form State
+  const [targetAmount, setTargetAmount] = useState('');
+  const [minDonation, setMinDonation] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Documents Form State
+  const [managerId, setManagerId] = useState<File | null>(null);
+  const [proofOfAddress, setProofOfAddress] = useState<File | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [agreedToCampaignAccuracy, setAgreedToCampaignAccuracy] = useState(false);
+
+  useEffect(() => {
+    async function fetchBen() {
+      const res = await getApprovedBeneficiaries();
+      if (res.success && res.data) {
+        setBeneficiaries(res.data);
+      }
+    }
+    fetchBen();
+  }, []);
+
+  const toggleBeneficiary = (id: string) => {
+    setSelectedBeneficiaries(prev =>
+      prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
+    );
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('category', activeCategory);
+    formData.append('description', description);
+    if (coverImage) {
+      formData.append('coverImage', coverImage);
+    }
+    formData.append('target_amount', targetAmount);
+    // Suggestion: Skipping minDonation for backend saving currently since hc_campaigns does not have a dedicated slot
+    formData.append('end_date', endDate);
+    formData.append('selectedBeneficiaries', JSON.stringify(selectedBeneficiaries));
+
+    // Documents
+    if (managerId) {
+      formData.append('managerId', managerId);
+    }
+    if (proofOfAddress) {
+      formData.append('proofOfAddress', proofOfAddress);
+    }
+    formData.append('agreedToTerms', String(agreedToTerms));
+    formData.append('agreedToPrivacy', String(agreedToPrivacy));
+    formData.append('agreedToCampaignAccuracy', String(agreedToCampaignAccuracy));
+
+    const res = await createCampaignAction(formData);
+    setIsSubmitting(false);
+    if (res.success) setIsSubmitted(true);
+    else alert('Failed to create campaign: ' + res.error);
+  };
 
   const nextStep = () => setCurrentStep((step) => Math.min(step + 1, 5));
   const previousStep = () => setCurrentStep((step) => Math.max(step - 1, 1));
@@ -136,7 +284,7 @@ export default function CreateCampaignPage() {
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Campaign Basics</h2>
 
               <div className="mt-6 space-y-6">
-                <InputBlock label="Campaign Name" placeholder="e.g. Clean Water Initiative for Mali Village" />
+                <InputBlock label="Campaign Name" placeholder="e.g. Clean Water Initiative for Mali Village" value={title} onChange={(e) => setTitle(e.target.value)} />
 
                 <div>
                   <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category</label>
@@ -182,6 +330,8 @@ export default function CreateCampaignPage() {
                     <textarea
                       rows={8}
                       placeholder="Explain why you are starting this campaign and how the funds will be used..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
                       className="min-h-[250px] w-full resize-none bg-[#f7f4f3] px-6 pb-6 pt-2 text-[14px] text-[#6d5d59] outline-none placeholder:text-[#b9aeaa]"
                     />
                   </div>
@@ -194,13 +344,24 @@ export default function CreateCampaignPage() {
               <p className="mt-2 text-[13px] text-[#8d7d78]">High-quality visuals increase donations by up to 3x.</p>
 
               <DragDropUploader
+                onFileSelect={(file) => setCoverImage(file)}
                 className="mt-6 flex min-h-[280px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f7e9e6] text-[#b55247]">
-                  <Camera size={24} />
-                </div>
-                <p className="mt-5 text-[18px] font-bold text-[#4a3936]">Upload main cover photo</p>
-                <p className="mt-2 text-[12px] font-medium text-[#9a8d88]">Recommended size: 1200 x 675px</p>
+                {coverImage ? (
+                  <div className="flex flex-col items-center">
+                    <CheckCircle2 size={32} className="text-[#2ba05b] mb-4" />
+                    <p className="text-[18px] font-bold text-[#4a3936]">{coverImage.name}</p>
+                    <p className="mt-2 text-[12px] font-medium text-[#9a8d88]">Click to replace</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f7e9e6] text-[#b55247]">
+                      <Camera size={24} />
+                    </div>
+                    <p className="mt-5 text-[18px] font-bold text-[#4a3936]">Upload main cover photo</p>
+                    <p className="mt-2 text-[12px] font-medium text-[#9a8d88]">Recommended size: 1200 x 675px</p>
+                  </>
+                )}
               </DragDropUploader>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -228,8 +389,8 @@ export default function CreateCampaignPage() {
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Financial Objectives</h2>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
-                <InputBlock label="Monetary Goal" placeholder="0.00" icon={BadgeDollarSign} iconColor="text-[#b79d45]" type="number" />
-                <InputBlock label="Minimum Donation" placeholder="5.00" icon={HandCoins} type="number" />
+                <InputBlock label="Monetary Goal" placeholder="0.00" icon={BadgeDollarSign} iconColor="text-[#b79d45]" type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} />
+                <InputBlock label="Minimum Donation" placeholder="5.00" icon={HandCoins} type="number" value={minDonation} onChange={(e) => setMinDonation(e.target.value)} />
               </div>
 
               <div className="mt-5">
@@ -239,6 +400,8 @@ export default function CreateCampaignPage() {
                     <CalendarDays size={16} className="relative z-10 pointer-events-none text-[#9a8d88]" />
                     <input
                       type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
                       className="relative z-20 w-full bg-transparent text-[14px] text-[#6d5d59] outline-none [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                     />
                   </div>
@@ -283,59 +446,45 @@ export default function CreateCampaignPage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f8eae7] text-[#b55247]">
                   <HeartHandshake size={16} />
                 </div>
-                <h2 className="text-[18px] font-extrabold text-[#382b28]">Beneficiary Information</h2>
+                <h2 className="text-[18px] font-extrabold text-[#382b28]">Select Beneficiaries</h2>
               </div>
+              <p className="mt-2 text-[13px] text-[#84716b]">Choose one or more approved beneficiaries to invite to this campaign.</p>
 
-              <div className="mt-6 grid gap-5 md:grid-cols-2">
-                <InputBlock label="Beneficiary Name" placeholder="Full legal name" />
-                <InputBlock label="Contact Person" placeholder="If different from beneficiary" />
-                <InputBlock label="Phone Number" placeholder="+1 (555) 000-0000" />
-                <InputBlock label="Email Address" placeholder="email@example.com" />
-              </div>
-            </section>
-
-            <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f8eae7] text-[#b55247]">
-                  <UserSquare2 size={16} />
-                </div>
-                <h2 className="text-[18px] font-extrabold text-[#382b28]">Identity Verification</h2>
-              </div>
-              <p className="mt-3 text-[12px] text-[#8d7d78]">
-                Upload a clear copy of a government-issued ID to verify the beneficiary&apos;s identity.
-              </p>
-
-              <DragDropUploader
-                className="mt-5 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#b5a7a2] shadow-[0_8px_18px_rgba(87,55,48,0.04)]">
-                  <CloudUpload size={20} />
-                </div>
-                <p className="mt-5 text-[16px] font-bold text-[#4a3936]">Click to upload or drag and drop</p>
-                <p className="mt-2 text-[11px] font-medium text-[#9a8d88]">PDF, JPG or PNG (max. 10MB)</p>
-              </DragDropUploader>
-            </section>
-
-            <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f8eae7] text-[#b55247]">
-                  <Banknote size={16} />
-                </div>
-                <h2 className="text-[18px] font-extrabold text-[#382b28]">Bank Details</h2>
-              </div>
-
-              <div className="mt-6 space-y-5">
-                <InputBlock label="Account Holder Name" placeholder="As it appears on bank statement" />
-                <div className="grid gap-5 md:grid-cols-2">
-                  <InputBlock label="Bank Name" placeholder="e.g. Chase Bank, HSBC" />
-                  <InputBlock label="Account Number" placeholder="0000 0000 0000" />
-                </div>
-                <div className="flex items-start gap-3 rounded-[20px] bg-[#fcf7ea] px-4 py-4 text-[#85734e]">
-                  <ShieldCheck size={16} className="mt-0.5 shrink-0" />
-                  <p className="text-[12px] leading-6">
-                    Your financial information is encrypted and securely stored. We only use this information for disbursement of collected funds.
-                  </p>
-                </div>
+              <div className="mt-6 space-y-4">
+                {beneficiaries.length === 0 ? (
+                  <p className="text-[14px] text-[#84716b] py-4">No approved beneficiaries found.</p>
+                ) : (
+                  beneficiaries.map((b) => {
+                    const isSelected = selectedBeneficiaries.includes(b.id);
+                    return (
+                      <div key={b.id} className="flex items-center justify-between rounded-[22px] bg-[#f7f4f3] p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fce5c8] text-[#d98b2c] font-bold text-[14px]">
+                            {b.first_name?.[0]}{b.last_name?.[0]}
+                          </div>
+                          <div>
+                            <h3 className="text-[15px] font-bold text-[#382b28]">{b.first_name} {b.last_name}</h3>
+                            <p className="text-[12px] text-[#8e7f7a]">{b.email} • {b.bank_name || 'No Bank'}</p>
+                          </div>
+                        </div>
+                        
+                        <button
+                          type="button"
+                          onClick={() => toggleBeneficiary(b.id)}
+                          className={`relative flex h-7 w-12 cursor-pointer items-center rounded-full transition-colors ${
+                            isSelected ? 'bg-[#2ba05b]' : 'bg-[#d1c5c1]'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                              isSelected ? 'translate-x-[26px]' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </section>
           </>
@@ -357,12 +506,16 @@ export default function CreateCampaignPage() {
                   title="Drop your ID photo here"
                   subtitle="PNG, JPG or PDF (max. 10MB)"
                   icon={FileCheck2}
+                  onFileSelect={(file) => setManagerId(file)}
+                  selectedFile={managerId}
                 />
                 <DocumentUpload
                   label="Proof of Address"
                   title="Upload utility bill or bank statement"
                   subtitle="Dated within the last 6 months"
                   icon={MapPin}
+                  onFileSelect={(file) => setProofOfAddress(file)}
+                  selectedFile={proofOfAddress}
                 />
               </div>
 
@@ -384,14 +537,14 @@ export default function CreateCampaignPage() {
 
               <div className="mt-6 space-y-4">
                 {[
-                  ['Terms of Service', 'I agree to follow the campaign management rules and platform usage policies.'],
-                  ['Privacy Policy', 'I understand how HOPECARD handles my personal and financial information.'],
-                  ['Campaign Accuracy', 'I certify that all information provided in this campaign setup is true and accurate.'],
-                ].map(([title, copy]) => (
+                  { title: 'Terms of Service', copy: 'I agree to follow the campaign management rules and platform usage policies.', state: agreedToTerms, setState: setAgreedToTerms },
+                  { title: 'Privacy Policy', copy: 'I understand how HOPECARD handles my personal and financial information.', state: agreedToPrivacy, setState: setAgreedToPrivacy },
+                  { title: 'Campaign Accuracy', copy: 'I certify that all information provided in this campaign setup is true and accurate.', state: agreedToCampaignAccuracy, setState: setAgreedToCampaignAccuracy },
+                ].map(({ title, copy, state, setState }) => (
                   <div key={title} className="flex items-start justify-between gap-4 rounded-[20px] bg-[#f7f4f3] px-4 py-4">
                     <div className="flex items-start gap-3">
-                      <button type="button" className="mt-1 text-[#d1c5c1]">
-                        <Square size={16} />
+                      <button type="button" onClick={() => setState(!state)} className={`mt-1 ${state ? 'text-[#2ba05b]' : 'text-[#d1c5c1]'}`}>
+                        <CheckSquare size={16} />
                       </button>
                       <div>
                         <h3 className="text-[14px] font-bold text-[#433330]">{title}</h3>
@@ -550,10 +703,11 @@ export default function CreateCampaignPage() {
 
                 <button
                   type="button"
-                  onClick={() => setIsSubmitted(true)}
-                  className="flex h-[48px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-8 text-[13px] font-extrabold uppercase tracking-[0.05em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-all hover:bg-[#a0483e]"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="flex h-[48px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-8 text-[13px] font-extrabold uppercase tracking-[0.05em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] transition-all hover:bg-[#a0483e] disabled:opacity-75"
                 >
-                  Submit For Approval
+                  {isSubmitting ? 'Submitting...' : 'Submit For Approval'}
                   <ArrowRight size={15} />
                 </button>
               </div>
@@ -659,12 +813,16 @@ function InputBlock({
   icon: Icon,
   iconColor = 'text-[#9a8d88]',
   type = 'text',
+  value,
+  onChange,
 }: {
   label: string;
   placeholder: string;
   icon?: typeof FileText;
   iconColor?: string;
   type?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div>
@@ -674,6 +832,8 @@ function InputBlock({
         <input
           type={type}
           placeholder={placeholder}
+          value={value}
+          onChange={onChange}
           className={`w-full bg-transparent text-[14px] text-[#6d5d59] outline-none placeholder:text-[#b9aeaa] ${
             type === 'number' ? '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none' : ''
           }`}
@@ -688,30 +848,45 @@ function DocumentUpload({
   title,
   subtitle,
   icon: Icon,
+  onFileSelect,
+  selectedFile,
 }: {
   label: string;
   title: string;
   subtitle: string;
   icon: typeof FileText;
+  onFileSelect?: (file: File) => void;
+  selectedFile?: File | null;
 }) {
   return (
     <div>
       <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</label>
       <DragDropUploader
+        onFileSelect={onFileSelect}
         className="mt-3 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"
       >
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#b5a7a2] shadow-[0_8px_18px_rgba(87,55,48,0.04)]">
-          <Icon size={20} />
-        </div>
-        <p className="mt-5 text-[16px] font-bold text-[#4a3936]">{title}</p>
-        <p className="mt-2 text-[11px] font-medium text-[#9a8d88]">{subtitle}</p>
-        <span className="mt-4 rounded-full bg-[#f8eae7] px-4 py-2 text-[11px] font-bold text-[#c96a5b]">Select File</span>
+        {selectedFile ? (
+          <div className="flex flex-col items-center">
+            <Check size={24} className="text-[#2ba05b] mb-3" />
+            <p className="text-[14px] font-bold text-[#4a3936]">{selectedFile.name}</p>
+            <p className="mt-2 text-[11px] font-medium text-[#9a8d88]">Click to replace</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#b5a7a2] shadow-[0_8px_18px_rgba(87,55,48,0.04)]">
+              <Icon size={20} />
+            </div>
+            <p className="mt-5 text-[16px] font-bold text-[#4a3936]">{title}</p>
+            <p className="mt-2 text-[11px] font-medium text-[#9a8d88]">{subtitle}</p>
+            <span className="mt-4 rounded-full bg-[#f8eae7] px-4 py-2 text-[11px] font-bold text-[#c96a5b]">Select File</span>
+          </>
+        )}
       </DragDropUploader>
     </div>
   );
 }
 
-function DragDropUploader({ className, children }: { className?: string; children: React.ReactNode }) {
+function DragDropUploader({ className, children, onFileSelect }: { className?: string; children: React.ReactNode; onFileSelect?: (file: File) => void }) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -728,7 +903,9 @@ function DragDropUploader({ className, children }: { className?: string; childre
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    // Future handling of e.dataTransfer.files can go here
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFileSelect?.(e.dataTransfer.files[0]);
+    }
   };
 
   return (
@@ -742,7 +919,9 @@ function DragDropUploader({ className, children }: { className?: string; childre
       }`}
     >
       <input type="file" className="hidden" ref={inputRef} onChange={(e) => {
-        // e.target.files
+        if (e.target.files && e.target.files.length > 0) {
+          onFileSelect?.(e.target.files[0]);
+        }
       }} />
       {children}
     </div>
