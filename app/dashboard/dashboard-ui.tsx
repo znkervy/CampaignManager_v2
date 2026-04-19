@@ -37,6 +37,10 @@ function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
+function getInitials(name: string): string {
+  return name.split(' ').filter((w) => w.length > 0).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
 function timeAgo(dateStr: string): string {
   const ms = new Date(dateStr).getTime();
   if (Number.isNaN(ms)) return 'Unknown time';
@@ -186,7 +190,7 @@ export default function DashboardUI({
                             <td className="px-4 py-5 align-top">
                               <div className="flex items-center gap-3">
                                 <div className="h-[34px] w-[34px] rounded-lg bg-[#f7f4f3] flex items-center justify-center text-[10px] font-bold text-[#8a7a75]">
-                                  {campaign.title.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                                  {getInitials(campaign.title)}
                                 </div>
                                 <p className="max-w-[105px] text-[14px] font-bold leading-[1.15] text-[#3c302d]">
                                   {campaign.title}

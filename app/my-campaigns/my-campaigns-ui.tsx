@@ -21,6 +21,7 @@ function formatCurrency(amount: number): string {
 function getInitials(name: string): string {
   return name
     .split(' ')
+    .filter((w) => w.length > 0)
     .map((w) => w[0])
     .join('')
     .toUpperCase()
@@ -161,7 +162,7 @@ export default function MyCampaignsUI({
                         <td className="px-4 py-5">
                           <div className="flex items-center gap-3">
                             <div className="h-[34px] w-[34px] rounded-lg bg-[#f7f4f3] flex items-center justify-center text-[10px] font-bold text-[#8a7a75]">
-                              {campaign.title.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                              {getInitials(campaign.title)}
                             </div>
                             <span className="max-w-[170px] text-[14px] font-bold leading-[1.3] text-[#3b2f2c]">
                               {campaign.title}
