@@ -166,15 +166,15 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
     if (coverImage && coverImage.size > 0) {
       const fileExt = coverImage.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const filePath = `campaigns/${fileName}`;
+      const filePath = `cover-images/campaigns/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await adminSupabase.storage
-        .from('cover-images')
+        .from('camp-man-files')
         .upload(filePath, coverImage);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        return { success: false, error: 'Failed to upload cover image. Ensure the cover-images bucket exists.' };
+        return { success: false, error: 'Failed to upload cover image. Ensure the camp-man-files bucket exists.' };
       }
       cover_image_key = uploadData.path;
     }
