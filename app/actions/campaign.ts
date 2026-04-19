@@ -20,6 +20,80 @@ export type ActionResponse = {
   data?: any;
 };
 
+interface CampaignValidationError {
+  field: string;
+  message: string;
+}
+
+function validateCampaignData(data: {
+  title: string | null;
+  category: string | null;
+  description: string | null;
+  targetAmount: number;
+  endDate: string | null;
+  beneficiaryIds: string[];
+  managerId: File | null;
+  proofOfAddress: File | null;
+  agreedToTerms: string | null;
+  agreedToPrivacy: string | null;
+  agreedToCampaignAccuracy: string | null;
+}): CampaignValidationError[] {
+  const errors: CampaignValidationError[] = [];
+
+  if (!data.title || data.title.trim().length === 0) {
+    errors.push({ field: 'title', message: 'Campaign title is required' });
+  }
+
+  if (!data.category || data.category.trim().length === 0) {
+    errors.push({ field: 'category', message: 'Category is required' });
+  }
+
+  if (!data.description || data.description.trim().length === 0) {
+    errors.push({ field: 'description', message: 'Campaign description is required' });
+  }
+
+  if (isNaN(data.targetAmount) || data.targetAmount <= 0) {
+    errors.push({ field: 'targetAmount', message: 'Target amount must be greater than 0' });
+  }
+
+  if (!data.endDate) {
+    errors.push({ field: 'endDate', message: 'End date is required' });
+  } else {
+    const endDate = new Date(data.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (endDate <= today) {
+      errors.push({ field: 'endDate', message: 'End date must be in the future' });
+    }
+  }
+
+  if (data.beneficiaryIds.length === 0) {
+    errors.push({ field: 'beneficiaries', message: 'At least one beneficiary must be selected' });
+  }
+
+  if (!data.managerId || data.managerId.size === 0) {
+    errors.push({ field: 'managerId', message: 'Manager ID document is required' });
+  }
+
+  if (!data.proofOfAddress || data.proofOfAddress.size === 0) {
+    errors.push({ field: 'proofOfAddress', message: 'Proof of Address document is required' });
+  }
+
+  if (data.agreedToTerms !== 'true') {
+    errors.push({ field: 'agreements', message: 'You must agree to the Terms of Service' });
+  }
+
+  if (data.agreedToPrivacy !== 'true') {
+    errors.push({ field: 'agreements', message: 'You must agree to the Privacy Policy' });
+  }
+
+  if (data.agreedToCampaignAccuracy !== 'true') {
+    errors.push({ field: 'agreements', message: 'You must certify campaign accuracy' });
+  }
+
+  return errors;
+}
+
 export async function getApprovedBeneficiaries(): Promise<ActionResponse> {
   try {
     const supabase = await createClient();
@@ -59,6 +133,31 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
     try {
       selectedBeneficiaryIds = JSON.parse((formData.get('selectedBeneficiaries') as string) || '[]');
     } catch {}
+
+    const managerId = formData.get('managerId') as File | null;
+    const proofOfAddress = formData.get('proofOfAddress') as File | null;
+    const agreedToTerms = formData.get('agreedToTerms') as string | null;
+    const agreedToPrivacy = formData.get('agreedToPrivacy') as string | null;
+    const agreedToCampaignAccuracy = formData.get('agreedToCampaignAccuracy') as string | null;
+
+    // Validate campaign data
+    const validationErrors = validateCampaignData({
+      title,
+      category,
+      description,
+      targetAmount,
+      endDate,
+      beneficiaryIds: selectedBeneficiaryIds,
+      managerId,
+      proofOfAddress,
+      agreedToTerms,
+      agreedToPrivacy,
+      agreedToCampaignAccuracy,
+    });
+
+    if (validationErrors.length > 0) {
+      return { success: false, error: validationErrors[0].message };
+    }
 
     let cover_image_key = null;
 
