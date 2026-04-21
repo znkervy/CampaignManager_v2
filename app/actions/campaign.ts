@@ -170,7 +170,7 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
 
       const { data: uploadData, error: uploadError } = await adminSupabase.storage
         .from('camp-man-files')
-        .upload(`cover-images/${filePath}`, coverImage);
+        .upload(filePath, coverImage);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -306,6 +306,17 @@ export async function cancelCampaignAction(campaignId: string): Promise<ActionRe
     return { success: true };
   } catch (error: any) {
     console.error('Error cancelling campaign:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function migrateCoverImagesAction(): Promise<ActionResponse> {
+  try {
+    const { migrateCoverImages } = await import('@/app/utils/migrate-cover-images');
+    const result = await migrateCoverImages();
+    return result;
+  } catch (error: any) {
+    console.error('Migration action error:', error);
     return { success: false, error: error.message };
   }
 }
