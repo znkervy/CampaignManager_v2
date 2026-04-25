@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import {
   ArrowRight,
   BadgeCheck,
@@ -13,11 +13,15 @@ import {
   Phone,
   ShieldCheck,
   UserRound,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import AuthShell from '../../components/AuthShell';
 
 export default function CreateAccountPage() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -92,11 +96,14 @@ export default function CreateAccountPage() {
             <div className="flex h-[48px] items-center gap-3 rounded-full bg-[#f5f2f1] px-5">
               <Lock size={16} className="text-[#bcb3b0]" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="........"
                 className="w-full bg-transparent text-[13px] font-medium text-[#6d4a44] outline-none placeholder:text-[#bdb1ae]"
                 required
               />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[#bcb3b0] hover:text-[#8f7f7b] transition">
+                {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
           </label>
 
@@ -105,11 +112,14 @@ export default function CreateAccountPage() {
             <div className="flex h-[48px] items-center gap-3 rounded-full bg-[#f5f2f1] px-5">
               <ShieldCheck size={16} className="text-[#bcb3b0]" />
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="........"
                 className="w-full bg-transparent text-[13px] font-medium text-[#6d4a44] outline-none placeholder:text-[#bdb1ae]"
                 required
               />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-[#bcb3b0] hover:text-[#8f7f7b] transition">
+                {showConfirmPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
           </label>
         </div>

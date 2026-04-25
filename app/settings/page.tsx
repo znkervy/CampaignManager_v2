@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { BellDot, ChevronRight, CreditCard, ShieldCheck, UserRound } from 'lucide-react';
+import { BellDot, ChevronRight, CreditCard, ShieldCheck, UserRound, Eye, EyeOff } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 
 const securityItems = [
@@ -56,6 +56,7 @@ export default function SettingsPage() {
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
@@ -253,11 +254,16 @@ export default function SettingsPage() {
             <p className="mt-3 text-[14px] leading-relaxed text-[#8d7d78]">
               Are you sure you want to deactivate your account? This action cannot be undone. Please enter your password to confirm.
             </p>
-            <input 
-              type="password" 
-              placeholder="Enter password" 
-              className="mt-5 w-full rounded-xl bg-[#f7f4f3] px-4 py-3 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
-            />
+            <div className="relative mt-5">
+              <input 
+                type={showDeactivatePassword ? "text" : "password"} 
+                placeholder="Enter password" 
+                className="w-full rounded-xl bg-[#f7f4f3] px-4 py-3 pr-10 text-[14px] text-[#5d4c48] outline-none focus:ring-2 focus:ring-[#f5ece8]" 
+              />
+              <button type="button" onClick={() => setShowDeactivatePassword(!showDeactivatePassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#bcb3b0] hover:text-[#8f7f7b] transition">
+                {showDeactivatePassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
             <div className="mt-6 flex justify-end gap-3">
               <button 
                 type="button"

@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent } from 'react';
-import { ArrowRight, Lock, Mail } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+import { ArrowRight, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,18 +38,21 @@ export default function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#7f6763]">Password</span>
-            <button type="button" className="text-[11px] font-semibold text-[#f0a4a0]">
+            <Link href="/forgot-password" className="text-[11px] font-semibold text-[#f0a4a0] hover:text-[#e4807b]">
               Forgot Password?
-            </button>
+            </Link>
           </div>
           <div className="flex h-[48px] items-center gap-3 rounded-full bg-[#f5f2f1] px-5">
             <Lock size={16} className="text-[#bcb3b0]" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="........"
               className="w-full bg-transparent text-[13px] font-medium text-[#6d4a44] outline-none placeholder:text-[#8f7f7b]"
               required
             />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[#bcb3b0] hover:text-[#8f7f7b] transition">
+              {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
           </div>
         </div>
 
