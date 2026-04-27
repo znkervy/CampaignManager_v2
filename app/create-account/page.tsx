@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   FileText,
   BadgeCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import AuthShell from '../../components/AuthShell';
 import { signUpAction } from '../actions/auth';
@@ -28,6 +30,8 @@ export default function CreateAccountPage() {
     password: '',
     confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [files, setFiles] = useState<{
     secRegistration: File | null;
@@ -200,7 +204,7 @@ export default function CreateAccountPage() {
             <div className="flex h-[48px] items-center gap-3 rounded-full bg-[#f5f2f1] px-5">
               <Lock size={16} className="text-[#bcb3b0]" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -208,6 +212,9 @@ export default function CreateAccountPage() {
                 className="w-full bg-transparent text-[13px] font-medium text-[#6d4a44] outline-none placeholder:text-[#bdb1ae]"
                 required
               />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[#bcb3b0] hover:text-[#8f7f7b] transition">
+                {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
           </label>
 
@@ -216,7 +223,7 @@ export default function CreateAccountPage() {
             <div className="flex h-[48px] items-center gap-3 rounded-full bg-[#f5f2f1] px-5">
               <ShieldCheck size={16} className="text-[#bcb3b0]" />
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -224,6 +231,9 @@ export default function CreateAccountPage() {
                 className="w-full bg-transparent text-[13px] font-medium text-[#6d4a44] outline-none placeholder:text-[#bdb1ae]"
                 required
               />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-[#bcb3b0] hover:text-[#8f7f7b] transition">
+                {showConfirmPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
           </label>
         </div>
