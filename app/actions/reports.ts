@@ -240,7 +240,7 @@ export async function getMyCampaigns(
 
   if (campaignIds.length > 0) {
     const { data: links } = await adminSupabase
-      .from('campaign_beneficiaries')
+      .from('campaign_invitations')
       .select('campaign_id, beneficiary_profile_id')
       .in('campaign_id', campaignIds);
 

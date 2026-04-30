@@ -207,7 +207,7 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
       }));
 
       const { error: joinError } = await adminSupabase
-        .from('campaign_beneficiaries')
+        .from('campaign_invitations')
         .insert(joinRows);
 
       if (joinError) {
