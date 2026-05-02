@@ -3,22 +3,43 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState, useRef, ChangeEvent, KeyboardEvent } from 'react';
-import { ArrowLeft, ArrowRight, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Mail, AlertCircle } from 'lucide-react';
+import { useTransition } from 'react';
 import AuthShell from '../../components/AuthShell';
+import { sendOTPAction, verifyOTPAction } from '../actions/auth';
 
 const OTP_LENGTH = 6;
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [showToast, setShowToast] = useState(false);
+  const [error, setError] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const handleSendCodeClick = () => {
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3500);
+    if (!email) {
+      setError('Please enter your email address.');
+      return;
+    }
+
+    setError('');
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('email', email);
+      const result = await sendOTPAction(formData);
+
+      if (result.error) {
+        setError(result.error);
+      } else if (result.success) {
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 3500);
+      }
+    });
   };
 
   const updateDigit = (index: number, value: string) => {
@@ -44,7 +65,28 @@ export default function ForgotPasswordPage() {
 
   const handleSubmitCode = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    router.push('/reset-password');
+
+    const otpCode = code.join('');
+    if (otpCode.length !== OTP_LENGTH) {
+      setError('Please enter all 6 digits.');
+      return;
+    }
+
+    setError('');
+    startTransition(async () => {
+      const result = await verifyOTPAction(email, otpCode);
+
+      if (result.error) {
+        setError(result.error);
+      } else if (result.success) {
+        // Pass email and OTP to reset-password page via query params
+        const params = new URLSearchParams({
+          email: email,
+          otp: otpCode,
+        });
+        router.push(`/reset-password?${params.toString()}`);
+      }
+    });
   };
 
   return (
@@ -62,6 +104,8 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-transparent text-[13px] font-medium text-[#6d4a44] outline-none placeholder:text-[#bdb1ae]"
                 required
               />
@@ -71,12 +115,20 @@ export default function ForgotPasswordPage() {
             <button
               type="button"
               onClick={handleSendCodeClick}
-              className="rounded-lg bg-[#f0a4a0] px-4 py-1.5 text-[10px] font-extrabold tracking-[0.06em] text-white uppercase transition hover:bg-[#e4807b]"
+              disabled={isPending}
+              className="rounded-lg bg-[#f0a4a0] px-4 py-1.5 text-[10px] font-extrabold tracking-[0.06em] text-white uppercase transition hover:bg-[#e4807b] disabled:opacity-60"
             >
-              Send Code
+              {isPending ? 'Sending...' : 'Send Code'}
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-[12px] font-medium text-[#d72617]">
+            <AlertCircle size={14} />
+            <span>{error}</span>
+          </div>
+        )}
 
         <div className="space-y-2">
           <span className="text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#7f6763] block">Recovery Code</span>
@@ -102,10 +154,11 @@ export default function ForgotPasswordPage() {
 
         <button
           type="submit"
-          className="mt-8 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#a6493f] text-[13px] font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(166,73,63,0.28)] transition hover:bg-[#963f37]"
+          disabled={isPending}
+          className="mt-8 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#a6493f] text-[13px] font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(166,73,63,0.28)] transition hover:bg-[#963f37] disabled:opacity-60"
         >
-          Verify Code
-          <ArrowRight size={16} />
+          {isPending ? 'Verifying...' : 'Verify Code'}
+          {!isPending && <ArrowRight size={16} />}
         </button>
       </form>
 

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import MyCampaignsUI from './my-campaigns-ui';
+import { getMyCampaigns } from '@/app/actions/reports';
 
 export default async function MyCampaignsPage({
   searchParams,
@@ -13,6 +14,7 @@ export default async function MyCampaignsPage({
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      console.log('[MyCampaignsPage] No user found, redirecting to /');
       redirect('/');
     }
 
@@ -24,49 +26,30 @@ export default async function MyCampaignsPage({
       .single();
 
     if (!managerProfile) {
+      console.log('[MyCampaignsPage] No manager profile found, redirecting to /');
       redirect('/');
     }
 
     if (managerProfile.status !== 'approved') {
+      console.log('[MyCampaignsPage] Manager profile not approved, redirecting to /');
       redirect(`/?error=account_not_approved`);
     }
 
     const params = await searchParams;
     const currentPage = Math.max(1, parseInt(params.page ?? '1', 10));
 
-    // Simplified query - just get campaigns without complex joins
-    const { data: campaigns, error: campaignsError } = await adminSupabase
-      .from('hc_campaigns')
-      .select('id, title, status, collected_amount, target_amount, end_date, cover_image_key, created_at')
-      .eq('created_by', user.id)
-      .order('created_at', { ascending: false })
-      .range((currentPage - 1) * 10, currentPage * 10 - 1);
-
-    if (campaignsError) {
-      throw campaignsError;
-    }
-
-    const campaignList = campaigns ?? [];
-    const totalCount = campaignList.length;
+    console.log('[MyCampaignsPage] Fetching campaigns for user:', user.id);
+    const { campaigns, totalCount } = await getMyCampaigns(user.id, {
+      status: params.status,
+      search: params.search,
+      page: currentPage,
+    });
 
     const managerName = `${managerProfile.first_name} ${managerProfile.last_name}`;
 
-    // Convert to expected format
-    const formattedCampaigns = campaignList.map((c: any) => ({
-      id: c.id,
-      title: c.title,
-      status: c.status,
-      collectedAmount: Number(c.collected_amount ?? 0),
-      targetAmount: Number(c.target_amount ?? 0),
-      endDate: c.end_date,
-      beneficiaryName: '—',
-      coverImageKey: c.cover_image_key,
-      createdAt: c.created_at,
-    }));
-
     return (
       <MyCampaignsUI
-        campaigns={formattedCampaigns}
+        campaigns={campaigns}
         totalCount={totalCount}
         currentPage={currentPage}
         managerName={managerName}

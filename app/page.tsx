@@ -1,35 +1,43 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
 import { ArrowRight, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import { loginAction } from './actions/auth';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const confirmed = searchParams.get('confirmed');
   const urlError = searchParams.get('error');
   const [showPassword, setShowPassword] = useState(false);
-
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true);
     setError('');
+    setIsPending(true);
 
+    const fd = new FormData(event.currentTarget);
     try {
-      const fd = new FormData(event.currentTarget);
       const result = await loginAction(fd);
       if (result?.error) {
         setError(result.error);
+        setIsPending(false);
       }
-    } finally {
-      setLoading(false);
+      // If result is null or success, redirect() was called in the server action
+      // Next.js will handle the redirect
+    } catch (error: any) {
+      // redirect() throws NEXT_REDIRECT which is expected
+      if (error?.digest?.includes('NEXT_REDIRECT')) {
+        console.log('Redirecting...');
+      } else {
+        console.error('Login error:', error);
+        setError('An unexpected error occurred. Please try again.');
+        setIsPending(false);
+      }
     }
   };
 
@@ -100,11 +108,11 @@ function LoginForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isPending}
           className="mt-8 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#a6493f] text-[13px] font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(166,73,63,0.28)] transition hover:bg-[#963f37] disabled:opacity-60"
         >
-          {loading ? 'Signing In...' : 'Sign In'}
-          {!loading && <ArrowRight size={16} />}
+          {isPending ? 'Signing In...' : 'Sign In'}
+          {!isPending && <ArrowRight size={16} />}
         </button>
       </form>
 
