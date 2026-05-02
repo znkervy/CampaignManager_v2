@@ -310,6 +310,49 @@ export async function cancelCampaignAction(campaignId: string): Promise<ActionRe
   }
 }
 
+export async function changeCampaignToDraftAction(campaignId: string): Promise<ActionResponse> {
+  try {
+    const adminSupabase = createAdminClient();
+
+    // First, fetch the current campaign status
+    const { data: campaign, error: fetchError } = await adminSupabase
+      .from('hc_campaigns')
+      .select('status')
+      .eq('id', campaignId)
+      .single();
+
+    if (fetchError || !campaign) {
+      console.error('Error fetching campaign:', fetchError);
+      return { success: false, error: 'Campaign not found.' };
+    }
+
+    // Validate that campaign is in 'active' status
+    if (campaign.status === 'draft') {
+      return { success: false, error: 'This campaign is already in Draft status.' };
+    }
+
+    if (campaign.status !== 'active') {
+      return { success: false, error: 'You can only change Active campaigns to Draft.' };
+    }
+
+    // Update status to draft
+    const { error: updateError } = await adminSupabase
+      .from('hc_campaigns')
+      .update({ status: 'draft' })
+      .eq('id', campaignId);
+
+    if (updateError) {
+      console.error('Draft status change error:', updateError);
+      return { success: false, error: 'Failed to change campaign to draft.' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error changing campaign to draft:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function migrateCoverImagesAction(): Promise<ActionResponse> {
   try {
     const { migrateCoverImages } = await import('@/app/utils/migrate-cover-images');

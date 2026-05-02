@@ -10,15 +10,20 @@ export async function createClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          const all = cookieStore.getAll();
+          console.log('[supabase.getAll] Returning', all.length, 'cookies:', all.map(c => c.name).join(','));
+          return all;
         },
         setAll(cookiesToSet) {
+          console.log('[supabase.setAll] Setting', cookiesToSet.length, 'cookies:', cookiesToSet.map(c => c.name).join(','));
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
+              console.log('[supabase.setAll] Setting', name);
               cookieStore.set(name, value, options);
             });
-          } catch {
-            // Cookie writes are ignored in Server Components; middleware handles refreshes.
+            console.log('[supabase.setAll] Cookies set successfully');
+          } catch (e) {
+            console.error('[supabase.setAll] Error:', e);
           }
         },
       },

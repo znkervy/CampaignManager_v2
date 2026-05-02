@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, MoreVertical, Plus, Search, TrendingUp, Users, XCircle } from 'lucide-react';
 import AppShell from '../../components/AppShell';
-import { activateCampaignAction, completeCampaignAction, cancelCampaignAction } from '@/app/actions/campaign';
+import { activateCampaignAction, completeCampaignAction, cancelCampaignAction, changeCampaignToDraftAction } from '@/app/actions/campaign';
 import type { MyCampaignRow } from '@/app/actions/reports';
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
@@ -47,6 +47,8 @@ export default function MyCampaignsUI({
   const activeFilter = searchParams.get('status') ?? 'all';
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   function navigate(params: Record<string, string>) {
     const next = new URLSearchParams(searchParams.toString());
@@ -68,6 +70,19 @@ export default function MyCampaignsUI({
 
   function handlePage(p: number) {
     navigate({ page: p.toString() });
+  }
+
+  async function handleChangeToDraft() {
+    if (selectedCampaignId) {
+      const res = await changeCampaignToDraftAction(selectedCampaignId);
+      if (res.success) {
+        setShowDraftDialog(false);
+        setSelectedCampaignId(null);
+        router.refresh();
+      } else {
+        alert(res.error || 'Failed to change status to draft');
+      }
+    }
   }
 
   const filterTabs = [
@@ -228,7 +243,26 @@ export default function MyCampaignsUI({
                                 </button>
                               </>
                             )}
-                            <button type="button" className="text-[#9d8f8a]">
+                            <button
+                              type="button"
+                              title={campaign.status === 'active' ? 'More Options' : 'Can only change active campaigns to draft'}
+                              onClick={() => {
+                                if (campaign.status === 'draft') {
+                                  alert('This campaign is already in Draft status.');
+                                } else if (campaign.status !== 'active') {
+                                  alert('You can only change Active campaigns to Draft.');
+                                } else {
+                                  setSelectedCampaignId(campaign.id.toString());
+                                  setShowDraftDialog(true);
+                                }
+                              }}
+                              disabled={campaign.status !== 'active'}
+                              className={`${
+                                campaign.status === 'active'
+                                  ? 'text-[#9d8f8a] hover:text-[#6d6662] cursor-pointer'
+                                  : 'text-[#d5cac7] cursor-not-allowed'
+                              }`}
+                            >
                               <MoreVertical size={16} />
                             </button>
                           </div>
@@ -326,6 +360,55 @@ export default function MyCampaignsUI({
           </section>
         </div>
       </div>
+
+      {showDraftDialog && selectedCampaignId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2d201d]/35 px-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-[0_24px_70px_rgba(61,34,29,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-[22px] font-extrabold text-[#352826]">Change Campaign to Draft</h2>
+                <p className="mt-2 text-[14px] leading-6 text-[#87736e]">
+                  Changing an Active campaign to Draft will pause it and make it unavailable to donors. This action can be reversed by reactivating the campaign.
+                  <br />
+                  <br />
+                  <strong>Are you sure you want to proceed?</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDraftDialog(false);
+                  setSelectedCampaignId(null);
+                }}
+                className="text-[#a18e89]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDraftDialog(false);
+                  setSelectedCampaignId(null);
+                }}
+                className="rounded-full border border-[#eedfdb] px-5 py-2.5 text-[13px] font-bold text-[#7b6763]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleChangeToDraft}
+                disabled={!selectedCampaignId}
+                className="rounded-full bg-[#b55247] px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] disabled:opacity-50"
+              >
+                Change to Draft
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
