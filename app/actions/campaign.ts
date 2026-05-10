@@ -179,71 +179,27 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
       cover_image_key = uploadData.path;
     }
 
-    const { data: campaign, error: insertError } = await adminSupabase
-      .from('hc_campaigns')
-      .insert({
-        title: title || 'Untitled Campaign',
-        category: category?.toLowerCase() || null,
-        description: description || null,
-        cover_image_key,
+    const { data: campaign, error: insertError } = await fetch(`${process.env.CAMPAIGN_SERVICE_URL || 'http://localhost:3001'}/api/campaigns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        category,
+        description,
         target_amount: targetAmount,
         end_date: endDate,
-        status: 'draft',
+        cover_image_key,
         created_by: userData.user.id,
-        start_date: new Date().toISOString().split('T')[0],
-      })
-      .select('id')
-      .single();
+        beneficiaryIds: selectedBeneficiaryIds,
+      }),
+    }).then(res => res.json().then(data => ({ data, error: res.ok ? null : 'Failed to call service' })));
 
     if (insertError) {
-      console.error('Insert error:', insertError);
-      return { success: false, error: 'Failed to create campaign record.' };
+      console.error('Service error:', insertError);
+      return { success: false, error: 'Failed to create campaign via service.' };
     }
 
-    if (selectedBeneficiaryIds.length > 0) {
-      const joinRows = selectedBeneficiaryIds.map((id) => ({
-        campaign_id: campaign.id,
-        beneficiary_profile_id: id,
-      }));
-
-      const { error: joinError } = await adminSupabase
-        .from('campaign_invitations')
-        .insert(joinRows);
-
-      if (joinError) {
-        console.error('Beneficiary link error:', joinError);
-        return { success: false, error: 'Campaign created but failed to link beneficiaries. Please try again.' };
-      }
-
-      // Send invitation emails
-      const { data: beneficiaries } = await adminSupabase
-        .from('beneficiary_profiles')
-        .select('email, first_name, last_name')
-        .in('id', selectedBeneficiaryIds);
-
-      for (const b of beneficiaries || []) {
-        if (!b.email) continue;
-        try {
-          await transporter.sendMail({
-            from: process.env.SMTP_FROM || 'hopecardenterprise@gmail.com',
-            to: b.email,
-            subject: 'You have been invited to a new HopeCard Campaign!',
-            html: `
-              <div style="font-family: sans-serif; text-align: center; color: #333;">
-                <h2 style="color: #b55247;">Hello ${b.first_name || 'Beneficiary'},</h2>
-                <p>You have been selected as a beneficiary for a newly created campaign on HopeCard.</p>
-                <p>Please log in to your dashboard to view the details and confirm your participation.</p>
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/login" style="display: inline-block; padding: 10px 20px; margin-top: 20px; background-color: #b55247; color: #fff; text-decoration: none; border-radius: 5px;">Login to Dashboard</a>
-              </div>
-            `,
-          });
-        } catch (mailError) {
-          console.error(`Email failed to ${b.email}`, mailError);
-        }
-      }
-    }
-
-    return { success: true };
+    return { success: true, data: campaign };
   } catch (error: any) {
     console.error('Error creating campaign:', error);
     return { success: false, error: error.message };
