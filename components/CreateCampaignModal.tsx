@@ -21,7 +21,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess }: Crea
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:3001/api/campaigns', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/campaigns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

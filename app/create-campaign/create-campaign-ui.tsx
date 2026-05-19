@@ -653,9 +653,9 @@ export default function CreateCampaignUI({
                   <div className="rounded-[20px] bg-[#f7f4f3] p-5">
                     <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Target Amount</label>
                     <p className="mt-2 text-[22px] font-bold text-[#382b28]">
-                      {targetAmount ? `$${parseFloat(targetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                      {targetAmount ? `₱${parseFloat(targetAmount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                     </p>
-                    <p className="mt-1 text-[11px] text-[#9a8d88]">USD - US Dollars</p>
+                    <p className="mt-1 text-[11px] text-[#9a8d88]">PHP - Philippine Peso</p>
                   </div>
                   <div className="rounded-[20px] bg-[#f7f4f3] p-5">
                     <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Deadline</label>
@@ -782,63 +782,100 @@ export default function CreateCampaignUI({
             </>
           ) : (
           <>
-            <section className="rounded-[30px] bg-white px-6 py-8 text-center shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:px-8">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#f58f86] text-white shadow-[0_16px_32px_rgba(245,143,134,0.28)]">
-                <Check size={28} strokeWidth={3} />
+            <section className="rounded-[30px] bg-white px-6 py-10 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:px-10">
+              {/* Header */}
+              <div className="text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#3caa71] text-white shadow-[0_16px_32px_rgba(60,170,113,0.28)]">
+                  <Check size={28} strokeWidth={3} />
+                </div>
+                <h2 className="mt-6 text-[26px] font-extrabold tracking-[-0.02em] text-[#2e2523]">
+                  Congratulations, {managerName.split(' ')[0]}! 🎉
+                </h2>
+                <p className="mx-auto mt-3 max-w-[560px] text-[14px] leading-7 text-[#7f6f6a]">
+                  Your campaign <span className="font-bold text-[#b55247]">&quot;{title}&quot;</span> has been successfully created and is saved as a <span className="font-bold text-[#e38f4d]">Draft</span>. It&apos;s ready for you to activate whenever you are.
+                </p>
               </div>
 
-              <h2 className="mt-8 text-[22px] font-extrabold text-[#382b28] sm:text-[24px]">Campaign Submitted for Review!</h2>
-              <p className="mx-auto mt-4 max-w-[620px] text-[14px] leading-7 text-[#7f6f6a]">
-                Great job! Your campaign <span className="font-semibold text-[#e07d71]">&quot;{title}&quot;</span> has
-                been sent to our administration team for verification. We&apos;ll review the details and beneficiary information to ensure
-                everything is ready for the marketplace.
-              </p>
-
-              <div className="mx-auto mt-8 max-w-[760px] rounded-[22px] bg-[#faf7f5] px-5 py-6 text-left">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-[#8f817d]">Next Steps</p>
-
-                <div className="relative mt-5 grid grid-cols-3 gap-4">
-                  <div className="pointer-events-none absolute left-[12%] right-[12%] top-4 h-px bg-[#ece3df]" />
-
-                  {[
-                    ['Admin Screening', 'ID verification', 'Est. 24-48 hours', true],
-                    ['Final Approval', 'Reviewing compliance', '', false],
-                    ['Marketplace Listing', 'Launch to donors', '', false],
-                  ].map(([title, copy, eta, active]) => (
-                    <div key={title as string} className="relative z-10 flex flex-col items-start">
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(87,55,48,0.06)] ${
-                          active ? 'bg-[#f58f86] text-white' : 'bg-white text-[#8f817d]'
-                        }`}
-                      >
-                        <CheckSquare size={15} />
-                      </div>
-                      <h3 className="mt-4 text-[12px] font-extrabold text-[#433330]">{title}</h3>
-                      <p className="mt-1 text-[11px] text-[#8d7d78]">{copy}</p>
-                      {eta ? <p className="mt-1 text-[10px] font-bold text-[#d56f60]">{eta}</p> : null}
+              {/* Campaign Summary */}
+              <div className="mx-auto mt-8 max-w-[700px] rounded-[20px] bg-[#faf7f5] px-6 py-5 ring-1 ring-[#f0e6e2]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.07em] text-[#9a8984]">Campaign Summary</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#b0a09b]">Campaign Name</p>
+                    <p className="mt-0.5 text-[14px] font-bold text-[#3b2f2c]">{title}</p>
+                  </div>
+                  {activeCategory && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#b0a09b]">Category</p>
+                      <p className="mt-0.5 text-[14px] font-bold text-[#3b2f2c] capitalize">{activeCategory}</p>
                     </div>
-                  ))}
+                  )}
+                  {targetAmount && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#b0a09b]">Target Amount</p>
+                      <p className="mt-0.5 text-[14px] font-bold text-[#3b2f2c]">
+                        {new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(parseFloat(targetAmount))}
+                      </p>
+                    </div>
+                  )}
+                  {endDate && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#b0a09b]">End Date</p>
+                      <p className="mt-0.5 text-[14px] font-bold text-[#3b2f2c]">
+                        {new Date(endDate + 'T00:00:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
+                  )}
+                  {selectedBeneficiaries.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#b0a09b]">Invited Beneficiaries</p>
+                      <p className="mt-0.5 text-[14px] font-bold text-[#3b2f2c]">
+                        {beneficiaries
+                          .filter((b) => selectedBeneficiaries.includes(b.id))
+                          .map((b) => `${b.first_name} ${b.last_name}`)
+                          .join(', ')}
+                      </p>
+                    </div>
+                  )}
+                  <div className="sm:col-span-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#b0a09b]">Status</p>
+                    <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-[#fff4e5] px-3 py-1 text-[11px] font-extrabold text-[#e38f4d]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#e38f4d]" />
+                      Draft — Pending Activation
+                    </span>
+                  </div>
                 </div>
               </div>
 
+              {/* Next step callout */}
+              <div className="mx-auto mt-6 max-w-[700px] rounded-[18px] border border-[#e38f4d]/30 bg-[#fff9f0] px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e38f4d] text-white">
+                    <ArrowRight size={14} />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-extrabold text-[#7a4f1e]">Action Required: Activate Your Campaign</p>
+                    <p className="mt-1 text-[12px] leading-6 text-[#9a6e45]">
+                      Your campaign is saved as a <strong>Draft</strong> and is not yet visible to donors. Head to <strong>My Campaigns</strong> and click the <strong>Activate</strong> button to make it live on the marketplace.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
                   href="/my-campaigns"
-                  className="flex h-[46px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-7 text-[13px] font-extrabold uppercase tracking-[0.04em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)]"
+                  className="flex h-[48px] items-center justify-center gap-2 rounded-full bg-[#b55247] px-8 text-[13px] font-extrabold uppercase tracking-[0.04em] text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] transition-colors"
                 >
-                  View My Campaigns
+                  Go to My Campaigns
                   <ArrowRight size={14} />
                 </Link>
-                <Link href="/dashboard" className="text-[12px] font-extrabold uppercase tracking-[0.05em] text-[#7f6f6a]">
+                <Link href="/dashboard" className="text-[12px] font-extrabold uppercase tracking-[0.05em] text-[#7f6f6a] hover:text-[#4a3936] transition-colors">
                   Back to Dashboard
                 </Link>
               </div>
             </section>
-
-            <div className="rounded-[20px] bg-white px-5 py-4 text-center text-[13px] text-[#8d7d78] shadow-[0_12px_32px_rgba(87,55,48,0.05)] ring-1 ring-[#f5ece8]">
-              Need help with your final submission? <span className="font-semibold text-[#c96a5b]">Chat with Support</span> or visit our{' '}
-              <span className="font-semibold text-[#c96a5b]">Help Center.</span>
-            </div>
           </>
           )
         ) : null}

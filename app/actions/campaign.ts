@@ -179,24 +179,58 @@ export async function createCampaignAction(formData: FormData): Promise<ActionRe
       cover_image_key = uploadData.path;
     }
 
-    const { data: campaign, error: insertError } = await fetch(`${process.env.CAMPAIGN_SERVICE_URL || 'http://localhost:3001'}/api/campaigns`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        category,
-        description,
+    const { data: campaign, error: insertError } = await adminSupabase
+      .from('hc_campaigns')
+      .insert({
+        title: title || 'Untitled Campaign',
+        category: category?.toLowerCase() || null,
+        description: description || null,
+        cover_image_key,
         target_amount: targetAmount,
         end_date: endDate,
-        cover_image_key,
+        status: 'draft',
         created_by: userData.user.id,
-        beneficiaryIds: selectedBeneficiaryIds,
-      }),
-    }).then(res => res.json().then(data => ({ data, error: res.ok ? null : 'Failed to call service' })));
+        start_date: new Date().toISOString().split('T')[0],
+      })
+      .select('id')
+      .single();
 
     if (insertError) {
-      console.error('Service error:', insertError);
-      return { success: false, error: 'Failed to create campaign via service.' };
+      console.error('Insert error:', insertError);
+      return { success: false, error: 'Failed to create campaign.' };
+    }
+
+    if (selectedBeneficiaryIds.length > 0) {
+      await adminSupabase
+        .from('campaign_invitations')
+        .insert(selectedBeneficiaryIds.map((id) => ({
+          campaign_id: campaign.id,
+          beneficiary_profile_id: id,
+          status: 'pending',
+        })));
+
+      const { data: beneficiaries } = await adminSupabase
+        .from('beneficiary_profiles')
+        .select('email, first_name, last_name')
+        .in('id', selectedBeneficiaryIds);
+
+      for (const b of beneficiaries ?? []) {
+        if (!b.email) continue;
+        try {
+          await transporter.sendMail({
+            from: `${process.env.SMTP_FROM} <${process.env.SMTP_USER}>`,
+            to: b.email,
+            subject: 'You have been invited to a new HopeCard Campaign!',
+            html: `<div style="font-family:sans-serif;text-align:center;color:#333">
+              <h2 style="color:#b55247">Hello ${b.first_name || 'Beneficiary'},</h2>
+              <p>You have been selected as a beneficiary for a newly created campaign on HopeCard.</p>
+              <p>Please log in to your dashboard to view the details and confirm your participation.</p>
+            </div>`,
+          });
+        } catch (mailError: any) {
+          console.error(`Failed to send invite email to ${b.email}:`, mailError.message);
+        }
+      }
     }
 
     return { success: true, data: campaign };
@@ -305,6 +339,51 @@ export async function changeCampaignToDraftAction(campaignId: string): Promise<A
     return { success: true };
   } catch (error: any) {
     console.error('Error changing campaign to draft:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getCampaignBeneficiaryIds(campaignId: string): Promise<ActionResponse> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { data, error } = await adminSupabase
+      .from('campaign_invitations')
+      .select('beneficiary_profile_id')
+      .eq('campaign_id', campaignId)
+      .in('status', ['pending', 'accepted']);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data: (data ?? []).map((r) => r.beneficiary_profile_id) };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function inviteBeneficiariesToCampaignAction(
+  campaignId: string,
+  beneficiaryIds: string[]
+): Promise<ActionResponse> {
+  try {
+    const adminSupabase = createAdminClient();
+
+    const { data: existing } = await adminSupabase
+      .from('campaign_invitations')
+      .select('beneficiary_profile_id')
+      .eq('campaign_id', campaignId);
+
+    const existingIds = new Set((existing ?? []).map((r) => r.beneficiary_profile_id));
+    const newIds = beneficiaryIds.filter((id) => !existingIds.has(id));
+
+    if (newIds.length > 0) {
+      const { error } = await adminSupabase
+        .from('campaign_invitations')
+        .insert(newIds.map((id) => ({ campaign_id: campaignId, beneficiary_profile_id: id })));
+
+      if (error) return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 }

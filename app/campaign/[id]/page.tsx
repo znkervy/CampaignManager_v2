@@ -25,7 +25,7 @@ export default function CampaignDetails() {
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/campaigns');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/campaigns`);
         if (!response.ok) throw new Error('Failed to fetch');
         
         const campaigns = await response.json();

@@ -51,6 +51,41 @@ export default async function MyCampaignsPage({
 
     const managerName = `${managerProfile.first_name} ${managerProfile.last_name}`;
 
+    // Fetch beneficiaries for these campaigns
+    const campaignIds = campaignList.map((c: any) => c.id);
+    const beneficiaryMap: Record<string, string> = {};
+
+    if (campaignIds.length > 0) {
+      const { data: links } = await adminSupabase
+        .from('campaign_invitations')
+        .select('campaign_id, beneficiary_profile_id')
+        .in('campaign_id', campaignIds)
+        .eq('status', 'accepted');
+
+      const beneficiaryIds = [...new Set((links ?? []).map((l: any) => l.beneficiary_profile_id))];
+
+      if (beneficiaryIds.length > 0) {
+        const { data: bProfiles } = await adminSupabase
+          .from('beneficiary_profiles')
+          .select('id, first_name, last_name')
+          .in('id', beneficiaryIds);
+
+        const bMap = Object.fromEntries(
+          (bProfiles ?? []).map((b: any) => [b.id, `${b.first_name} ${b.last_name}`])
+        );
+
+        for (const link of links ?? []) {
+          if (bMap[(link as any).beneficiary_profile_id]) {
+            if (beneficiaryMap[(link as any).campaign_id]) {
+              beneficiaryMap[(link as any).campaign_id] += `, ${bMap[(link as any).beneficiary_profile_id]}`;
+            } else {
+              beneficiaryMap[(link as any).campaign_id] = bMap[(link as any).beneficiary_profile_id];
+            }
+          }
+        }
+      }
+    }
+
     // Convert to expected format
     const formattedCampaigns = campaignList.map((c: any) => ({
       id: c.id,
@@ -59,7 +94,7 @@ export default async function MyCampaignsPage({
       collectedAmount: Number(c.collected_amount ?? 0),
       targetAmount: Number(c.target_amount ?? 0),
       endDate: c.end_date,
-      beneficiaryName: '—',
+      beneficiaryName: beneficiaryMap[c.id] ?? '—',
       coverImageKey: c.cover_image_key,
       createdAt: c.created_at,
     }));

@@ -24,6 +24,14 @@ export class CampaignsService implements OnModuleInit {
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);
+
+    if (!this.configService.get<string>('NOTIFICATION_SERVICE_URL')) {
+      console.warn(
+        '⚠️  WARNING: NOTIFICATION_SERVICE_URL is not set — falling back to ' +
+          'http://localhost:3004. Campaign creation emails will fail in ' +
+          'non-local environments.',
+      );
+    }
   }
 
   async create(dto: any) {
@@ -79,7 +87,7 @@ export class CampaignsService implements OnModuleInit {
         .select('email, first_name, last_name')
         .in('id', beneficiaryIds);
 
-      const notificationServiceUrl = this.configService.get<string>('NOTIFICATION_SERVICE_URL') || 'http://localhost:3003';
+      const notificationServiceUrl = this.configService.get<string>('NOTIFICATION_SERVICE_URL') || 'http://localhost:3004';
 
       for (const b of beneficiaries || []) {
         if (!b.email) continue;

@@ -14,7 +14,7 @@ import AppShell from '../../components/AppShell';
 import type { DonorStatCards, DonorRow } from '@/app/actions/reports';
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
 }
 
 function formatDate(dateStr: string | null): string {

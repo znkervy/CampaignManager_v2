@@ -21,10 +21,12 @@
       "mcp__ide__getDiagnostics",
       "Bash(echo \"Dev server started. PID: $!\")",
       "Bash(npm exec *)",
-      "Bash(curl -s http://localhost:3000/create-campaign)",
-      "Bash(curl -s -L http://localhost:3000/create-campaign)",
+      "Bash(curl -s http://localhost:3001/create-campaign)",
+      "Bash(curl -s -L http://localhost:3001/create-campaign)",
       "Bash(git checkout *)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Skill(superpowers:brainstorming)",
+      "Bash(del *)"
     ]
   }
 }
